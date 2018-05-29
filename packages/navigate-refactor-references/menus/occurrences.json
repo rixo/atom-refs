@@ -1,0 +1,26 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Toggle occurrences",
+        "command": "occurrences:toggle"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "occurrences",
+          "submenu": [
+            {
+              "label": "Toggle",
+              "command": "occurrences:toggle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
