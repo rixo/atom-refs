@@ -15,32 +15,7 @@ const setVimMode = (vimService, editor, [mode, submode]) => {
   }
 }
 
-// const refactor = state => e => {
-//   const {vim, editor, ranges} = state
-//   if (!editor || !ranges || ranges.length < 1) {
-//     return
-//   }
-//   if (vim) {
-//     const savedMode = getVimMode(vim, editor)
-//     doRefactor()
-//     if (savedMode) {
-//       setVimMode(vim, editor, savedMode)
-//     }
-//   } else {
-//     doRefactor()
-//   }
-//   function doRefactor() {
-//     const markers = ranges.map(range => {
-//       const marker = editor.markBufferRange(range)
-//       editor.decorateMarker(marker, {type: 'highlight', class: 'refactor-reference'})
-//       return marker
-//     })
-//   }
-// }
-// refactor.scope = 'atom-text-editor'
-
 const select = state => e => {
-  console.log('select!!')
   const {editor, ranges, vim} = state
   if (!editor || !ranges) {
     return
@@ -53,17 +28,12 @@ const select = state => e => {
   } else {
     editor.setSelectedBufferRanges(ranges)
   }
-  // const {vim} = state.vim
-  // if (vim) {
-  //   const sel = vim.persistentSelection()
-  //   debugger
-  // }
 }
 select.scope = 'atom-text-editor'
 
 const next = state => e => {
   const {ranges, editor, locator} = state
-  if (!ranges || !editor || !locator) {
+  if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
   editor.getCursors().forEach(cursor => {
@@ -89,7 +59,7 @@ next.scope = 'atom-text-editor'
 
 const previous = state => e => {
   const {ranges, editor, locator} = state
-  if (!ranges || !editor || !locator) {
+  if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
   editor.getCursors().forEach(cursor => {
@@ -122,7 +92,6 @@ const findCurrentIndex = ({ranges, locator}, cursor) => {
 }
 
 export default {
-  // refactor,
   select,
   next,
   previous,

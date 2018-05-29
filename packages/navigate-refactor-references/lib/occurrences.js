@@ -3,17 +3,16 @@
 import OccurrencesView from './occurrences-view'
 import {CompositeDisposable} from 'atom'
 import Debug from 'debug'
-// import {tryParse} from './parse'
-import {findReferences} from './find-occurrences'
+// import {findReferences} from './find-occurrences'
 import {createLocator, locToRange} from './util'
 import commands from './commands'
 import {PACKAGE, cursorChangeThrottle} from './config'
-import _ from 'underscore-plus'
+// import _ from 'underscore-plus'
+import modules from './modules'
 
 // const OccurrencesView = require('./occurrences-view')
 // const {CompositeDisposable} = require('atom')
 // const Debug = require('debug')
-// const {tryParse} = require('./parse')
 // const {findReferences} = require('./find-occurrences')
 // const {createLocator, locToRange} = require('./util')
 
@@ -25,11 +24,13 @@ const scopes = [
   'source.babel',
   'text.html.basic',
   'text.html.vue',
+  'text.html.php',
 ]
 
 const state = {
   subscriptions: null,
   vim: null,
+  module: null,
   editor: null,
   disposable: null,
   activeDisposable: null,
@@ -41,14 +42,15 @@ const state = {
 }
 
 const activate = () => {
-  state.subscriptions = new CompositeDisposable()
+  const subscriptions = new CompositeDisposable()
+  state.subscriptions = subscriptions
 
   // lazy require of (big import) babylon
-  state.parse = require('./parse').tryParse
+  // state.parse = require('./parse').tryParse
 
   const applyBufferChanged = () => {
     bufferChangedTimeout = null
-    const {editor, parse} = state
+    const {editor, module: {parse}} = state
     const text = editor.getText()
     debug('onBufferChanged createLocator', parsed)
     state.locator = createLocator(text)
@@ -88,6 +90,10 @@ const activate = () => {
     const grammar = editor.getGrammar()
     const scopeName = grammar.scopeName
     if (scopes.includes(scopeName)) {
+      state.module = modules.getModule(scopeName)
+      if (!state.module) {
+        throw new Error(`Unssuported scope: ${scopeName}`)
+      }
       enable(state)
     } else {
       disable(state)
@@ -97,14 +103,14 @@ const activate = () => {
   const onActiveTextEditor = editor => {
     const {disposable} = state
     if (disposable) {
-      state.subscriptions.remove(state.disposable)
+      subscriptions.remove(state.disposable)
       disposable.dispose()
       debug('editorDisposable disposed')
     }
     state.editor = editor
     if (editor) {
       state.disposable = new CompositeDisposable()
-      state.subscriptions.add(state.disposable)
+      subscriptions.add(state.disposable)
       state.disposable.add(
         editor.onDidChangeGrammar(onChangeGrammar)
       )
@@ -132,24 +138,36 @@ const activate = () => {
     }
   }
 
-  state.subscriptions.add(
+  subscriptions.add(
     atom.workspace.observeActiveTextEditor(onActiveTextEditor)
   )
 
   Object.entries(commands).forEach(([name, handler]) => {
     const scope = handler.scope || 'atom-workspace'
-    state.subscriptions.add(atom.commands.add(scope, {
+    subscriptions.add(atom.commands.add(scope, {
       [`${PACKAGE}:${name}`]: handler(state),
     }));
   })
 }
 
 const deactivate = () => {
-  state.subscriptions.dispose()
+  const {subscriptions} = state
+  if (subscriptions) {
+    subscriptions.dispose()
+    state.subscriptions = null
+  }
 }
 
 const updateReferences = state => {
-  const {editor, cursorLocations, ast, parseError} = state
+  const {
+    editor,
+    cursorLocations,
+    ast,
+    parseError,
+    module: {
+      findReferences,
+    }
+  } = state
   // remove existing markers
   if (state.markers) {
     state.markers.forEach(marker => marker.destroy())

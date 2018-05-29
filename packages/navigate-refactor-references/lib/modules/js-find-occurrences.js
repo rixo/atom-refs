@@ -1,9 +1,9 @@
 'use babel'
 
 import traverse from 'babel-traverse'
-import {locToRange} from './util'
+import {locToRange} from '../util'
 import Debug from 'debug'
-import {PACKAGE} from './config'
+import {PACKAGE} from '../config'
 
 const debug = Debug(PACKAGE)
 
@@ -25,6 +25,7 @@ export const findReferences = (ast, loc) => {
   }
 
   let ranges
+  let refPaths
   if (binding.isGlobal) {
     ranges = []
     refPaths = binding.referencePaths
@@ -94,7 +95,7 @@ const getDeclRange = binding => {
   return range
 }
 
-export const gatherBindings = (ast, loc) => {
+const gatherBindings = (ast, loc) => {
   const touches = path => {
     const {start, end} = path.node
     if (end < loc) {
@@ -109,7 +110,7 @@ export const gatherBindings = (ast, loc) => {
   const visitor = {
     Identifier(path) {
       if (touches(path)) {
-        const {scope, node, node:{name}} = path
+        const {scope, node, node: {name}} = path
         const scopeBinding = scope.getBinding(name)
         if (
           scopeBinding && (
@@ -141,7 +142,7 @@ const gatherGlobalBindings = (ast, {node:{name: searchName}}) => {
   const paths = []
   const visitor = {
     Identifier(path) {
-      const {scope, node, node:{name}} = path
+      const {scope, node, node: {name}} = path
       if (name === searchName) {
         const scopeBinding = scope.getBinding(name)
         // if there's a binding, then it's not global!
