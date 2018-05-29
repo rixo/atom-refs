@@ -2,12 +2,9 @@
 
 import OccurrencesView from './occurrences-view'
 import {CompositeDisposable} from 'atom'
-import Debug from 'debug'
-// import {findReferences} from './find-occurrences'
 import {createLocator, locToRange} from './util'
 import commands from './commands'
-import {PACKAGE, cursorChangeThrottle} from './config'
-// import _ from 'underscore-plus'
+import {PACKAGE, debug, cursorChangeThrottle} from './config'
 import modules from './modules'
 
 // const OccurrencesView = require('./occurrences-view')
@@ -15,8 +12,6 @@ import modules from './modules'
 // const Debug = require('debug')
 // const {findReferences} = require('./find-occurrences')
 // const {createLocator, locToRange} = require('./util')
-
-const debug = Debug(PACKAGE)
 
 const scopes = [
   'source.js',
@@ -200,7 +195,7 @@ const updateReferences = state => {
   // references
   if (ast) {
     cursorLocations.forEach(location => {
-      const ranges = findReferences(ast, location)
+      const ranges = findReferences(ast, location, state.locator)
       state.ranges = ranges
       ranges.forEach(range => {
         const marker = editor.markBufferRange(range)

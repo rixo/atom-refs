@@ -11,7 +11,7 @@ const scopes = [
 ]
 
 const parse = lazy(createParser)
-const findReferences = lazy(() => require('./js-find-occurrences'))
+const findReferences = lazy(() => require('./js-find-occurrences').findReferences)
 
 export default {
   scopes,
@@ -51,7 +51,7 @@ function createParser() {
       })
     } catch (err) {
       if (sourceType === 'script' && isModuleError(err)) {
-        return tryParse(code, 'module')
+        return parseAs(code, 'module')
       } else if (err instanceof SyntaxError && err.loc) {
         error = err
       } else {
