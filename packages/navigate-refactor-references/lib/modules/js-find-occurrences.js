@@ -64,6 +64,19 @@ export const findReferences = (ast, loc) => {
     }))
   }
 
+  ranges.sort((
+    {start: {column: ca, row: ra}},
+    {start: {column: cb, row: rb}}
+  ) => {
+    if (ra < rb) {
+      return -1
+    } else if (ra > rb) {
+      return 1
+    } else {
+      return ca - cb
+    }
+  })
+
   return ranges
 }
 
