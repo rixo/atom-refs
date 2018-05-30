@@ -2,15 +2,12 @@
 
 import traverse from 'babel-traverse'
 import {locToRange} from '../util'
-import Debug from 'debug'
-import {PACKAGE} from '../config'
-
-const debug = Debug(PACKAGE)
+import {debug} from '../config'
 
 export const findReferences = (ast, loc) => {
   let binding
   try {
-    binding = gatherBindings(ast, loc)
+    binding = findBinding(ast, loc)
   } catch (err) {
     if (err.message === "Cannot read property 'file' of undefined") {
       // ignore this one...seems like a bug in babylon when there are duplicated
@@ -21,19 +18,26 @@ export const findReferences = (ast, loc) => {
   }
 
   if (!binding) {
+    debug('Not found')
     return []
   }
 
+  debug('Found', binding)
+
+  return gatherRanges(binding)
+}
+
+const gatherRanges = binding => {
   let ranges
   let refPaths
   if (binding.isGlobal) {
     ranges = []
     refPaths = binding.referencePaths
   } else {
-    ranges = [getDeclRange(binding)],
+    ranges = [getDeclRange(binding)]
     refPaths = binding.referencePaths
       // filter ObjectPattern
-      .filter((p) => p.node !== binding.identifier )
+      .filter((p) => p.node !== binding.identifier)
       // filter undefined for ImportDefault
       .filter((p) => p)
       // filter exports
@@ -58,7 +62,7 @@ export const findReferences = (ast, loc) => {
   if (binding.constantViolations) {
     ranges = ranges.concat(binding.constantViolations.map(p => {
       const node = p.node.left || p.node
-      range = locToRange(node.loc)
+      const range = locToRange(node.loc)
       range.type = 'mut'
       return range
     }))
@@ -84,9 +88,9 @@ const getDeclRange = binding => {
   const {path, identifier} = binding
   let range
   if (path.isImportSpecifier()) {
-    const { imported, local } = path.node
+    const {imported, local} = path.node
     range = locToRange(local.loc)
-    range.shorthand = local.start == imported.start
+    range.shorthand = local.start === imported.start
     if (!range.shorthand) {
       range.key = locToRange(imported.loc)
     }
@@ -108,7 +112,10 @@ const getDeclRange = binding => {
   return range
 }
 
-const gatherBindings = (ast, loc) => {
+const findBinding = (ast, loc) => {
+  if (!ast) {
+    throw new Error('AST required')
+  }
   const touches = path => {
     const {start, end} = path.node
     if (end < loc) {
@@ -119,43 +126,57 @@ const gatherBindings = (ast, loc) => {
       return true
     }
   }
+  const isNode = node => ({node: ref}) => ref === node
+  const isLeftNode = node => ({node: {left: ref}}) => ref === node
   // https://github.com/thejameskyle/babel-handbook/blob/master/translations/en/plugin-handbook.md
-  const visitor = {
-    Identifier(path) {
-      if (touches(path)) {
-        const {scope, node, node: {name}} = path
-        const scopeBinding = scope.getBinding(name)
-        if (
-          scopeBinding && (
-            scopeBinding.identifier === node
-            || scopeBinding.referencePaths.some(({node: ref}) => ref === node)
-            || scopeBinding.constantViolations.some(({node: {left: ref}}) => ref === node)
-          )
-        ) {
-          binding = scopeBinding
-          path.stop()
-        } else if (scope.globals[name]) {
-          // global, no binding: gather global references
-          binding = gatherGlobalBindings(ast, path)
-          path.stop()
-        }
+  const onIdentififer = path => {
+    if (touches(path)) {
+      const {scope, node, node: {name}} = path
+      if (!name) {
+        return
       }
-    },
+      const scopeBinding = scope.getBinding(name)
+      if (
+        scopeBinding && (
+          scopeBinding.identifier === node
+          || scopeBinding.referencePaths.some(isNode(node))
+          // || scopeBinding.constantViolations.some(({node: {left: ref}}) => ref === node)
+          || scopeBinding.constantViolations.some(isLeftNode(node))
+        )
+      ) {
+        binding = scopeBinding
+        path.stop()
+      } else if (scope.globals[name]) {
+        // global, no binding: gather global references
+        binding = gatherGlobalBindings(ast, path)
+        path.stop()
+      }
+    }
+  }
+  const visitor = {
+    // enter(path) {
+    //   if (touches(path)) {
+    //     const {scope, node, node: {name}} = path
+    //     if (!name) {
+    //       return
+    //     }
+    //     debugger
+    //   }
+    // },
+    JSXIdentifier: onIdentififer,
+    Identifier: onIdentififer,
   }
   let binding
-  if (!ast) {
-    debugger
-  }
   traverse(ast, visitor)
   // if (!binding) d('global?')
   return binding
 }
 
-const gatherGlobalBindings = (ast, {node:{name: searchName}}) => {
+const gatherGlobalBindings = (ast, {node: {name: searchName}}) => {
   const paths = []
   const visitor = {
     Identifier(path) {
-      const {scope, node, node: {name}} = path
+      const {scope, node: {name}} = path
       if (name === searchName) {
         const scopeBinding = scope.getBinding(name)
         // if there's a binding, then it's not global!
@@ -163,7 +184,7 @@ const gatherGlobalBindings = (ast, {node:{name: searchName}}) => {
           paths.push(path)
         }
       }
-    }
+    },
   }
   traverse(ast, visitor)
   return {

@@ -1,10 +1,10 @@
 'use babel'
 
-import OccurrencesView from './occurrences-view'
+// import OccurrencesView from './occurrences-view'
 import {CompositeDisposable} from 'atom'
-import {createLocator, locToRange} from './util'
+import {createLocator} from './util'
 import commands from './commands'
-import {PACKAGE, debug, cursorChangeThrottle} from './config'
+import {PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE} from './config'
 import modules from './modules'
 
 // const OccurrencesView = require('./occurrences-view')
@@ -34,9 +34,10 @@ const state = {
   ast: null,
   parseError: null,
   ranges: [],
+  markers: [],
 }
 
-const activate = () => {
+export const activate = () => {
   const subscriptions = new CompositeDisposable()
   state.subscriptions = subscriptions
 
@@ -44,10 +45,9 @@ const activate = () => {
   // state.parse = require('./parse').tryParse
 
   const applyBufferChanged = () => {
-    bufferChangedTimeout = null
     const {editor, module: {parse}} = state
     const text = editor.getText()
-    debug('onBufferChanged createLocator', parsed)
+    debug('onBufferChanged createLocator')
     state.locator = createLocator(text)
     debug('onBufferChanged parse')
     const parsed = parse(text)
@@ -109,6 +109,11 @@ const activate = () => {
       state.disposable.add(
         editor.onDidChangeGrammar(onChangeGrammar)
       )
+      editor.onDidDestroy(() => {
+        if (state.linter) {
+          state.linter.setMessages(editor.getPath(), [])
+        }
+      })
       onChangeGrammar()
     }
   }
@@ -125,7 +130,7 @@ const activate = () => {
   }
 
   const disable = state => {
-    const {editor, disposable, activeDisposable} = state
+    const {disposable, activeDisposable} = state
     if (activeDisposable) {
       disposable.remove(activeDisposable)
       activeDisposable.dispose()
@@ -141,42 +146,54 @@ const activate = () => {
     const scope = handler.scope || 'atom-workspace'
     subscriptions.add(atom.commands.add(scope, {
       [`${PACKAGE}:${name}`]: handler(state),
-    }));
+    }))
   })
 }
 
-const deactivate = () => {
+export const deactivate = () => {
   const {subscriptions} = state
+  clearMarkers(state)
   if (subscriptions) {
     subscriptions.dispose()
     state.subscriptions = null
   }
 }
 
-const updateReferences = state => {
+const handleParseError = state => {
+  if (state.lintTimeout) {
+    clearTimeout(state.lintTimeout)
+  }
+  const handler = () => displayParseError(state)
+  state.lintTimeout = setTimeout(handler, LINT_THROTTLE)
+}
+
+const displayParseError = state => {
   const {
     editor,
-    cursorLocations,
-    ast,
+    linter,
     parseError,
-    module: {
-      findReferences,
-    }
+    markers,
   } = state
-  // remove existing markers
-  if (state.markers) {
-    state.markers.forEach(marker => marker.destroy())
+  if (!parseError) {
+    return
   }
-  // new markers
-  const markers = []
-  state.markers = markers
-  // console.log(parseError, ast)
-  // error
-  if (parseError) {
-    if (parseError instanceof SyntaxError && parseError.loc) {
-      const {loc: {line, column}, message} = parseError
-      const row = line - 1
-      const range = [[row, column], [row, column + 1]]
+  const editorPath = editor.getPath()
+  const {message} = parseError
+  if (parseError instanceof SyntaxError && parseError.loc) {
+    const {loc: {line, column}} = parseError
+    const row = line - 1
+    const range = [[row, column], [row, column + 1]]
+    if (linter) {
+      linter.setMessages(editorPath, [{
+        severity: 'error',
+        location: {
+          file: editorPath,
+          position: range,
+        },
+        excerpt: message,
+        description: message,
+      }])
+    } else {
       const marker = editor.markBufferRange(range)
       editor.decorateMarker(marker, {type: 'highlight', class: 'refactor-error'})
       editor.decorateMarker(marker, {type: 'line-number', class: 'refactor-error'})
@@ -189,7 +206,51 @@ const updateReferences = state => {
       // editor.decorateMarker(marker, {type: 'text', style: {color: 'red'}})
       // TODO message
       markers.push(marker)
-      return
+    }
+  } else {
+    if (linter) {
+      linter.setMessages(editorPath, [{
+        severity: 'error',
+        location: {
+          file: editorPath,
+          position: [[0, 0], [0, 1]],
+        },
+        excerpt: message,
+        description: message,
+      }])
+    }
+  }
+}
+
+const clearMarkers = state => {
+  const {markers} = state
+  if (markers) {
+    state.markers.forEach(marker => marker.destroy())
+  }
+  state.markers = []
+}
+
+const updateReferences = state => {
+  // remove existing markers
+  clearMarkers(state)
+  const {
+    editor,
+    markers,
+    cursorLocations,
+    ast,
+    parseError,
+    linter,
+    module: {
+      findReferences,
+    },
+  } = state
+  // guard: parse error
+  if (parseError) {
+    handleParseError(state)
+  } else {
+    if (linter) {
+      const editorPath = editor.getPath()
+      linter.setMessages(editorPath, [])
     }
   }
   // references
@@ -209,13 +270,14 @@ const updateReferences = state => {
   }
 }
 
-const consumeVimModePlus = service => {
+export const consumeVimModePlus = service => {
   state.vim = service
 }
 
-export default {
-  subscriptions: null,
-  consumeVimModePlus,
-  activate,
-  deactivate,
+export const consumeIndie = registerIndie => {
+  const linter = registerIndie({
+    name: PACKAGE,
+  })
+  state.subscriptions.add(linter)
+  state.linter = linter
 }

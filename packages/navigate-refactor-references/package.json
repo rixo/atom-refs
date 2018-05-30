@@ -20,6 +20,11 @@
       "versions": {
         "^0.1.0": "consumeVimModePlus"
       }
+    },
+    "linter-indie": {
+      "versions": {
+        "2.0.0": "consumeIndie"
+      }
     }
   },
   "license": "MIT",

@@ -46,6 +46,8 @@ function createParser() {
       ast = parse(code, {
         sourceType,
         plugins: parsePlugins,
+        // TODO command toggle strictMode
+        // strictMode: false,
         // ranges: [],
         // startLine: 1,
       })
