@@ -131,6 +131,10 @@ function createFinder() {
   const hackUseItemAliasLoc = node =>
     hackFunctionNameLoc({...node, name: node.alias}, indexOfAlias)
   const hackUseItemNameLoc = hackFunctionNameLoc
+  const hackUseItemNameOrAliasLoc = node => node.alias
+    ? hackUseItemAliasLoc(node)
+    : hackUseItemNameLoc(node)
+  const aliasableName = ({name, alias}) => alias ? alias : name
   const hackPropertyNameLoc = ({loc: {start}, name: {length}}) => {
     return {
       start,
@@ -230,6 +234,12 @@ function createFinder() {
         if (end.offset <= loc) return SKIP
         return node
       }
+      else if (kind === 'useitem') {
+        const {start, end} = hackUseItemNameOrAliasLoc(node)
+        if (start.offset > loc) return STOP
+        if (end.offset <= loc) return SKIP
+        return node
+      }
       // else if (node.kind === 'method') {
       //   const nameLoc = hackMethodNameLoc(node.loc)
       //   if (nameLoc.start.offset > loc) return STOP
@@ -249,9 +259,11 @@ function createFinder() {
 
   const findVariableRanges = (toNode, root) => {
     const ranges = []
-    const {kind: toKind, name: toName} = toNode
+    const {kind: toKind} = toNode
     const toCallable = toNode[$isCall] || toKind === 'function'
-    const toClass = toNode[$isClassAccess] || toKind === 'class'
+    const toClass = toNode[$isClassAccess]
+      || toKind === 'class'
+      || toKind === 'useitem'
     let kinds = []
     if (toKind === 'variable' || toKind === 'parameter') {
       kinds.push('variable', 'parameter')
@@ -264,6 +276,7 @@ function createFinder() {
     } else if (toKind === 'identifier') {
       kinds.push('identifier')
     }
+    const toName = aliasableName(toNode)
     const toNameLower = toName.toLowerCase()
     const testName = toCallable || toClass
       ? name => name && name.toLowerCase() === toNameLower
