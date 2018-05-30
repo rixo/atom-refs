@@ -118,10 +118,12 @@ const findBinding = (ast, loc) => {
   }
   const touches = path => {
     const {start, end} = path.node
-    if (end < loc) {
+    if (end <= loc) {
       path.skip()
+      return false
     } else if (start > loc) {
       path.stop()
+      return false
     } else {
       return true
     }

@@ -28,7 +28,7 @@ const createParser = () => {
       withSource: true, // needed to determine precise function name loc
     },
   })
-  return code => {
+  return ({code}) => {
     try {
       const ast = parser.parseCode(code)
       return {ast}
@@ -83,7 +83,7 @@ function createFinder() {
     }
     return false
   }
-  const isClassAccess = ({node: p, parent: {node: pp} = {}} = {}) => {
+  const isClassAccess = ({node: p} = {}) => {
     if (p) {
       if (p.kind === 'new' || p.kind === 'staticlookup') {
         return true
@@ -94,7 +94,7 @@ function createFinder() {
   const NL = /\r\n|\n|\r/g
   const indexOf = (source, name) => source.indexOf(name)
   const hackFunctionNameLoc = (
-    {loc: {start, end, source}, name},
+    {loc: {start, source}, name},
     indexOfName = indexOf,
   ) => {
     // const nameOffset = source.indexOf(name)
@@ -134,7 +134,7 @@ function createFinder() {
   const hackUseItemNameOrAliasLoc = node => node.alias
     ? hackUseItemAliasLoc(node)
     : hackUseItemNameLoc(node)
-  const aliasableName = ({name, alias}) => alias ? alias : name
+  const aliasableName = ({name, alias}) => alias || name
   const hackPropertyNameLoc = ({loc: {start}, name: {length}}) => {
     return {
       start,
@@ -142,11 +142,12 @@ function createFinder() {
         line: start.line,
         column: start.column + length + 1, // + 1 for the $
         offset: start.offset + length + 1,
-      }
+      },
     }
   }
 
-  const findIdentifier = (ast, loc, locator) => {
+  /* eslint-disable brace-style */
+  const findIdentifier = (ast, loc) => {
     const inNamespaces = []
     const inClasses = []
     const inFunctions = []
@@ -154,7 +155,7 @@ function createFinder() {
       start.offset <= loc && end.offset > loc
     const finder = path => {
       const {node, parent} = path
-      const {kind, loc: {start, end}, name} = node
+      const {kind, loc: {start, end}} = node
       // namespace
       if (kind === 'namespace') {
         if (start.offset > loc) return STOP
@@ -167,8 +168,7 @@ function createFinder() {
           inNamespaces.pop()
           return SKIP
         }
-      }
-      else if (isClassyNode(node)) {
+      } else if (isClassyNode(node)) {
         // class name
         if (kind === 'class') {
           const nameLoc = hackClassNameLoc(node)
@@ -209,8 +209,7 @@ function createFinder() {
           inFunctions.pop()
           return SKIP
         }
-      }
-      else if (kind === 'staticlookup') {
+      } else if (kind === 'staticlookup') {
         // TODO Test::$test
       }
       // others
@@ -227,14 +226,12 @@ function createFinder() {
           return
         }
         return node
-      }
-      else if (kind === 'property') {
+      } else if (kind === 'property') {
         const {start, end} = hackPropertyNameLoc(node)
         if (start.offset > loc) return STOP
         if (end.offset <= loc) return SKIP
         return node
-      }
-      else if (kind === 'useitem') {
+      } else if (kind === 'useitem') {
         const {start, end} = hackUseItemNameOrAliasLoc(node)
         if (start.offset > loc) return STOP
         if (end.offset <= loc) return SKIP
@@ -413,13 +410,13 @@ function createFinder() {
     return ranges
   }
 
-  return (ast, loc, locator) => {
+  return (ast, loc) => {
     const {
       node: identNode,
       inNamespaces,
       inFunctions,
       inClasses,
-    } = findIdentifier(ast, loc, locator)
+    } = findIdentifier(ast, loc)
     const result = []
     if (!identNode) {
       return result
@@ -437,7 +434,6 @@ function createFinder() {
       if (classNode) {
         result.push(...findClassRanges(classNode, identNode))
       } else {
-        debugger
         console.warn('atom-occurences: WTF??')
       }
     } else {
@@ -449,7 +445,7 @@ function createFinder() {
       } else {
         // search in root scope (outside any function)
         const namespaceNode = inNamespaces.pop()
-        const root = namespaceNode ? namespaceNode : ast
+        const root = namespaceNode || ast
         result.push(...findVariableRanges(identNode, root))
       }
     }

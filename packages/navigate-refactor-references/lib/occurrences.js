@@ -30,7 +30,7 @@ const state = {
   disposable: null,
   activeDisposable: null,
   locator: null,
-  cursorLocations: [],
+  cursorBufferPositions: [],
   ast: null,
   parseError: null,
   ranges: [],
@@ -46,11 +46,10 @@ export const activate = () => {
 
   const applyBufferChanged = () => {
     const {editor, module: {parse}} = state
-    const text = editor.getText()
-    debug('onBufferChanged createLocator')
-    state.locator = createLocator(text)
+    const code = editor.getText()
     debug('onBufferChanged parse')
-    const parsed = parse(text)
+    const parsed = parse({code, editor})
+    state.locator = parsed.locator || createLocator(code)
     debug('onBufferChanged parsed', parsed)
     state.ast = parsed.ast
     state.parseError = parsed.error
@@ -65,12 +64,9 @@ export const activate = () => {
 
   const applyCursorMoved = () => {
     cursorMovedTimeout = null
-    const {editor, locator} = state
-    const positions = editor.getCursorBufferPositions()
-    if (locator) {
-      state.cursorLocations = positions.map(locator)
-      updateReferences(state)
-    }
+    const {editor} = state
+    state.cursorBufferPositions = editor.getCursorBufferPositions()
+    updateReferences(state)
   }
   let cursorMovedTimeout = null
   const onCursorMoved = cursorChangeThrottle
@@ -236,7 +232,8 @@ const updateReferences = state => {
   const {
     editor,
     markers,
-    cursorLocations,
+    cursorBufferPositions: positions,
+    locator,
     ast,
     parseError,
     linter,
@@ -254,9 +251,11 @@ const updateReferences = state => {
     }
   }
   // references
-  if (ast) {
+  if (locator && ast) {
+    const cursorLocations = positions.map(locator)
     cursorLocations.forEach(location => {
-      const ranges = findReferences(ast, location, state.locator)
+      const {cursorPositions} = state
+      const ranges = findReferences(ast, location, {cursorPositions})
       state.ranges = ranges
       ranges.forEach(range => {
         const marker = editor.markBufferRange(range)
