@@ -13,14 +13,7 @@ import modules from './modules'
 // const {findReferences} = require('./find-occurrences')
 // const {createLocator, locToRange} = require('./util')
 
-const scopes = [
-  'source.js',
-  'source.js.jsx',
-  'source.babel',
-  'text.html.basic',
-  'text.html.vue',
-  'text.html.php',
-]
+const scopes = modules.getScopes()
 
 const state = {
   subscriptions: null,
@@ -62,10 +55,13 @@ export const activate = () => {
   // }
   const onBufferChanged = applyBufferChanged
 
-  const applyCursorMoved = () => {
+  const updateCursorPositions = () => {
     cursorMovedTimeout = null
     const {editor} = state
     state.cursorBufferPositions = editor.getCursorBufferPositions()
+  }
+  const applyCursorMoved = () => {
+    updateCursorPositions()
     updateReferences(state)
   }
   let cursorMovedTimeout = null
@@ -122,6 +118,7 @@ export const activate = () => {
       editor.onDidChangeCursorPosition(onCursorMoved),
     ].forEach(d => state.activeDisposable.add(d))
     disposable.add(state.activeDisposable)
+    updateCursorPositions()
     onBufferChanged()
   }
 
@@ -174,46 +171,66 @@ const displayParseError = state => {
     return
   }
   const editorPath = editor.getPath()
-  const {message} = parseError
-  if (parseError instanceof SyntaxError && parseError.loc) {
-    const {loc: {line, column}} = parseError
-    const row = line - 1
-    const range = [[row, column], [row, column + 1]]
-    if (linter) {
-      linter.setMessages(editorPath, [{
-        severity: 'error',
-        location: {
-          file: editorPath,
-          position: range,
-        },
-        excerpt: message,
-        description: message,
-      }])
-    } else {
-      const marker = editor.markBufferRange(range)
-      editor.decorateMarker(marker, {type: 'highlight', class: 'refactor-error'})
-      editor.decorateMarker(marker, {type: 'line-number', class: 'refactor-error'})
-      const item = document.createElement('div')
-      item.textContent = message
-      item.style.background = '#fff'
-      item.style.border = '1px solid darkred'
-      item.style.color = 'darkred'
-      editor.decorateMarker(marker, {type: 'overlay', item})
-      // editor.decorateMarker(marker, {type: 'text', style: {color: 'red'}})
-      // TODO message
-      markers.push(marker)
-    }
+
+  if (Array.isArray(parseError)) {
+    parseError.forEach(display)
   } else {
-    if (linter) {
-      linter.setMessages(editorPath, [{
-        severity: 'error',
-        location: {
-          file: editorPath,
-          position: [[0, 0], [0, 1]],
-        },
-        excerpt: message,
-        description: message,
-      }])
+    display(parseError)
+  }
+
+  function parseErrorRange(error) {
+    if (error.range) {
+      return error.range
+    } else if (error.loc) {
+      const {loc: {line, column}} = error
+      const row = line - 1
+      const range = [[row, column], [row, column + 1]]
+      return range
+    } else {
+      throw new Error('Parse error misses loc or range')
+    }
+  }
+
+  function display(error) {
+    const {message} = error
+    if (error instanceof SyntaxError && (error.loc || error.range)) {
+      const range = parseErrorRange(error)
+      if (linter) {
+        linter.setMessages(editorPath, [{
+          severity: 'error',
+          location: {
+            file: editorPath,
+            position: range,
+          },
+          excerpt: message,
+          description: message,
+        }])
+      } else {
+        const marker = editor.markBufferRange(range)
+        editor.decorateMarker(marker, {type: 'highlight', class: 'refactor-error'})
+        editor.decorateMarker(marker, {type: 'line-number', class: 'refactor-error'})
+        const item = document.createElement('div')
+        item.textContent = message
+        item.style.background = '#fff'
+        item.style.border = '1px solid darkred'
+        item.style.color = 'darkred'
+        editor.decorateMarker(marker, {type: 'overlay', item})
+        // editor.decorateMarker(marker, {type: 'text', style: {color: 'red'}})
+        // TODO message
+        markers.push(marker)
+      }
+    } else {
+      if (linter) {
+        linter.setMessages(editorPath, [{
+          severity: 'error',
+          location: {
+            file: editorPath,
+            position: [[0, 0], [0, 1]],
+          },
+          excerpt: message,
+          description: message,
+        }])
+      }
     }
   }
 }

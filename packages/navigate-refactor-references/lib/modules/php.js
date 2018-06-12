@@ -281,9 +281,19 @@ function createFinder() {
     const isOurKind = ({kind}) => kinds.some(k => k === kind)
     const isScope = node =>
       isFunctionNode(node) || isClassyNode(node) || node.kind === 'namespace'
+    const getNodeName = node => {
+      const {kind, name, alias} = node
+      let result = kind === 'useitem' && alias || name
+      // must handle case {name: {kind: 'identifier', name: '...'}}
+      if (typeof result === 'object' && result) {
+        return getNodeName(result)
+      } else {
+        return result
+      }
+    }
     const visitor = ({node, parent}) => {
-      const {kind, name, loc} = node
-      const visibleName = kind === 'useitem' && node.alias || name
+      const visibleName = getNodeName(node)
+      const {kind, loc} = node
       // if (toClass && kind === 'useitem' && testName(node.alias)) {
       //   const nameLoc = hackUseItemAliasLoc(node)
       //   const range = locToRange(nameLoc)

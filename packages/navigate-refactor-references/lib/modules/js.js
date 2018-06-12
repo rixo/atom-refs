@@ -40,14 +40,23 @@ function createParser() {
 
   const defaultSourceType = isBabelParser ? 'unambiguous' : 'script'
 
-  const scriptRe = /(^[\s\S]*<script\b[^>]*>)([\s\S]*)<\/script>/
+  const scriptRe = /(^[\s\S]*<script\b[^>]*>)([\s\S]*)<\/script>/g
+
+  const htmlScopes = [
+    'text.html.vue',
+    'text.html.basic',
+  ]
+  const isHtml = editor => {
+    const scopeName = editor.getGrammar().scopeName
+    return htmlScopes.some(scope => scope === scopeName)
+  }
 
   const parseSourceCode = (editor, code) => {
     if (editor === null) {
       return {code}
     }
     let sourceType
-    if (editor.getGrammar().scopeName === 'text.html.vue') {
+    if (isHtml(editor)) {
       sourceType = 'module'
       const match = scriptRe.exec(code)
       if (match && match[2]) {
