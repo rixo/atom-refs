@@ -3,9 +3,10 @@
 export const STOP = Symbol('stop')
 export const SKIP = Symbol('skip')
 
+const typeKey = 'type'
+const childrenKey = 'children'
+
 export function down(root, handler) {
-  const typeKey = 'type'
-  const childrenKey = 'children'
   let done = false
   let result = void 0
   const visit = node => {
@@ -34,7 +35,7 @@ export function down(root, handler) {
     return done
   }
   // visit(root)
-  root.children.some(visit)
+  root[childrenKey].some(visit)
   return result
 }
 

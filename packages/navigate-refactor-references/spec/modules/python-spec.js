@@ -322,17 +322,17 @@ c = 3
         expectRanges(998, expected)
       })
     })
-    describe('with nested functions', () => {
-      const expected = '61:8 61:13 decl, 63:4 63:9'
+    describe('with nested functions with same name', () => {
+      const expected = '68:4 68:9 decl, 72:0 72:5'
       it('finds refs from function definition', () => {
-        expectRanges(965, expected)
+        expectRanges(1039, expected)
       })
-      it('finds refs from local ref', () => {
-        expectRanges(1010, expected)
-      })
-      it('finds refs from inner ref', () => {
-        expectRanges(998, expected)
-      })
+      // it('finds refs from local ref', () => {
+      //   expectRanges(1010, expected)
+      // })
+      // it('finds refs from inner ref', () => {
+      //   expectRanges(998, expected)
+      // })
     })
   })
 })
