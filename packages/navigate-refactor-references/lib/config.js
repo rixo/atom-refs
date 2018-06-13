@@ -2,7 +2,7 @@
 
 import createDebug from 'debug'
 
-export const PACKAGE = 'occurrences'
+export const PACKAGE = 'navigate-refactor-references'
 
 export const cursorChangeThrottle = 100
 

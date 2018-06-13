@@ -1,6 +1,6 @@
 {
-  "name": "occurrences",
-  "main": "./lib/occurrences",
+  "name": "navigate-refactor-references",
+  "main": "./lib/navigate-refactor-references",
   "version": "0.0.0",
   "author": {
     "name": "Rixo",
@@ -8,7 +8,8 @@
   },
   "description": "Navigate and refactor references",
   "keywords": [],
-  "repository": "https://github.com/rixo/atom-occurrences",
+  "repository": "https://github.com/rixo/atom-navigate-refactor-references",
+  "activationCommands": [],
   "activationHooks": [
     "language-javascript:grammar-used",
     "language-typescript:grammar-used",

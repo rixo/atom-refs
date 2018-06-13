@@ -1,0 +1,9 @@
+{
+  "atom-workspace atom-text-editor.vim-mode-plus": {
+    "alt-k": "navigate-refactor-references:previous",
+    "alt-j": "navigate-refactor-references:next"
+  },
+  "atom-workspace atom-text-editor.vim-mode-plus.normal-mode, atom-workspace atom-text-editor.vim-mode-plus.insert-mode": {
+    "ctrl-r": "navigate-refactor-references:select"
+  }
+}

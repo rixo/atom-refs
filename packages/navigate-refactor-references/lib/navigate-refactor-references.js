@@ -1,17 +1,10 @@
 'use babel'
 
-// import OccurrencesView from './occurrences-view'
 import {CompositeDisposable} from 'atom'
 import {createLocator} from './util'
 import commands from './commands'
 import {PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE} from './config'
 import modules from './modules'
-
-// const OccurrencesView = require('./occurrences-view')
-// const {CompositeDisposable} = require('atom')
-// const Debug = require('debug')
-// const {findReferences} = require('./find-occurrences')
-// const {createLocator, locToRange} = require('./util')
 
 const scopes = modules.getScopes()
 
