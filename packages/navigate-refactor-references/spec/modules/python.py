@@ -69,6 +69,8 @@ func2()
 def func3():
     def func3():
         func3()
+        def func3():
+            func3()
     func3()
 func3()
 

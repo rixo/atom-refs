@@ -1,9 +1,7 @@
 'use babel'
 
 import {lazy} from './util'
-// import {down, up, SKIP} from './util/traverse'
-import * as traverse from './util/traverse'
-// import {debug} from '../config'
+import {debug} from '../config'
 import {Range} from 'atom'
 import assert from 'assert'
 
@@ -27,15 +25,20 @@ function createParser() {
   const Parser = require('tree-sitter')
   const Python = require('tree-sitter-python')
   const parser = new Parser()
+  const {down} = require('./util/traverse')
   parser.setLanguage(Python)
-  const {down} = traverse
   return ({code}) => {
     // TODO incremental
     const ast = parser.parse(code)
     // TODO remove debug util src
     ast.code = code
-    ast.rootNode.constructor.prototype.src = function() {
-      return this.tree.code.substring(this.startIndex, this.endIndex)
+    if (!ast.rootNode.constructor.prototype.hasOwnProperty('src')) {
+      Object.defineProperty(ast.rootNode.constructor.prototype, 'src', {
+        get() {
+          const code = this.tree.code
+          return code && code.substring(this.startIndex, this.endIndex)
+        },
+      })
     }
     // error
     let errors = []
@@ -56,7 +59,7 @@ function createParser() {
 }
 
 function createFinder() {
-  const {SKIP, up, down} = traverse
+  const {SKIP, up, down} = require('./util/traverse')
   const CLASS_DEF = 'class_definition'
   const FUNC_DEF = 'function_definition'
   const IDENTIFIER = 'identifier'
@@ -112,7 +115,7 @@ function createFinder() {
   ]
   const isScopeNode = ({type}) => scopeTypes.some(t => type === t)
 
-  const isIdentifier = node => node.type === 'identifier'
+  // const isIdentifier = node => node.type === 'identifier'
 
   const isBinding = ({type, parent}) => {
     if (type === FUNC_DEF || type == CLASS_DEF) {
@@ -150,7 +153,7 @@ function createFinder() {
       const identifier = getBindingIdentifier(node)
       const {startIndex, endIndex} = identifier
       if (startIndex <= loc && endIndex > loc) {
-        return identifier
+        return node
       }
     }
   })
@@ -195,26 +198,23 @@ function createFinder() {
         range.type = 'decl'
       }
     }
-    const targetName = getSrc(cursorNode)
+    const getBindingName = node => getSrc(getBindingIdentifier(node))
+    const targetName = getBindingName(cursorNode)
     // const testTargetName = node => getSrc(node) === targetName
-    const testTargetName = node => {
-      const idNode = getBindingIdentifier(node)
-      const name = getSrc(idNode)
-      return name === targetName
-    }
+    const testTargetName = node => getBindingName(node) === targetName
     const targetScopeNode = getInnerScopeNode(cursorNode)
     const rootScopeNode = findRootScope(cursorNode, testTargetName) || ast.rootNode
-    console.log(rootScopeNode.src())
+    debug('rootScopeNode', rootScopeNode.src)
     down(rootScopeNode, node => {
+      if (isBinding(node) && testTargetName(node)) {
+        pushNode(node)
+      }
       // skip scopes where target identifier is shadowed
       if (node !== targetScopeNode && isScopeNode(node)) {
         const shadowed = isShadowedAt(node, testTargetName)
         if (shadowed) {
           return SKIP
         }
-      }
-      if (isBinding(node) && testTargetName(node)) {
-        pushNode(node)
       }
     })
     return ranges

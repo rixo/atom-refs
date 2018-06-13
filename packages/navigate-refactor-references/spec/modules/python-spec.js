@@ -323,16 +323,30 @@ c = 3
       })
     })
     describe('with nested functions with same name', () => {
-      const expected = '68:4 68:9 decl, 72:0 72:5'
-      it('finds refs from function definition', () => {
-        expectRanges(1039, expected)
+      const expectedOutter = '68:4 68:9 decl, 74:0 74:5'
+      it('finds global refs from outter function definition', () => {
+        expectRanges(1039, expectedOutter)
       })
-      // it('finds refs from local ref', () => {
-      //   expectRanges(1010, expected)
-      // })
-      // it('finds refs from inner ref', () => {
-      //   expectRanges(998, expected)
-      // })
+      it('finds global refs from global ref', () => {
+        expectRanges(1134, expectedOutter)
+      })
+      const expectedLocal = '69:8 69:13 decl, 73:4 73:9'
+      it('finds local refs from local function definition', () => {
+        expectRanges(1056, expectedLocal)
+      })
+      it('finds local refs from local ref', () => {
+        expectRanges(1126, expectedLocal)
+      })
+      const expectedInner = '70:8 70:13, 71:12 71:17 decl, 72:12 72:17'
+      it('finds inner refs from inner function definition', () => {
+        expectRanges(1093, expectedInner)
+      })
+      it('finds inner refs from local ref', () => {
+        expectRanges(1073, expectedInner)
+      })
+      it('finds inner refs from inner ref', () => {
+        expectRanges(1114, expectedInner)
+      })
     })
   })
 })
