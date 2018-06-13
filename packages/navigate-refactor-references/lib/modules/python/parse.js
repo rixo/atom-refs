@@ -27,10 +27,26 @@ export default ({code}) => {
     })
   }
   // error
+  const getSrc = ({startIndex: a, endIndex: b}) => code.substring(a, b)
   let errors = []
   if (ast.rootNode.hasError()) {
+    const ignoreRows = []
+    const isIgnoredRow = (startRow, endRow) =>
+      ignoreRows.some(([start, end]) => startRow >= start && endRow <= end)
     down(ast.rootNode, node => {
       if (node.type === 'ERROR') {
+        const src = getSrc(node).trim()
+        const {
+          startPosition: {row: startRow},
+          endPosition: {row: endRow},
+        } = node
+        if (src[0] === '%') {
+          ignoreRows.push([startRow, endRow])
+          return
+        }
+        if (isIgnoredRow(startRow, endRow)) {
+          return
+        }
         const err = new SyntaxError('Parse error')
         err.range = nodeRange(node)
         errors.push(err)

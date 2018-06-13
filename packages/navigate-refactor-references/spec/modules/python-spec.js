@@ -41,6 +41,36 @@ c = 3
         expect(end.column).toBe(3)
       }
     })
+    describe('ipython/jupyter', () => {
+      it('does not flag line magics as errors', () => {
+        const code =
+          `
+          %alias bracket echo "Input in brackets: <%l>"
+          %autocall 1
+          def func(a):
+              %time print 'foo' + a
+          %time func(1)
+          `
+        const result = parse({code})
+        expect(result).toBeDefined()
+        expect(result.ast).toBeDefined()
+        expect(result.error).toBe(null)
+      })
+      it('does not flag cell magics as errors', () => {
+        const code =
+          `
+          %%bash
+          %%js
+          def func(a, b):
+            print('foo')
+          func()
+          `
+        const result = parse({code})
+        expect(result).toBeDefined()
+        expect(result.ast).toBeDefined()
+        expect(result.error).toBe(null)
+      })
+    })
   })
 
   describe('findReferences(ast, loc)', () => {

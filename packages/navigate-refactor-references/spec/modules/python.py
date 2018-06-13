@@ -74,6 +74,14 @@ def func3():
     func3()
 func3()
 
+#%%
+%%time
+%alias bracket echo "Input in brackets: <%l>"
+%autocall 1
+def func(a):
+    %time print 'foo'
+%time func 1
+
 # class Rixo:
 #     name = 'eric'
 #     def __init__(self, name):
