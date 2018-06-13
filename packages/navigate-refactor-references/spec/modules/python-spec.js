@@ -279,5 +279,76 @@ c = 3
         expectRanges(1114, expectedInner)
       })
     })
+    describe('with function parameters', () => {
+      {
+        const expected = '85:20 85:21 decl, 86:10 86:11'
+        it('finds parameters refs from parameters declaration', () => {
+          expectRanges(1285, expected)
+        })
+        it('finds parameters refs from local refs', () => {
+          expectRanges(1327, expected)
+        })
+      }
+      {
+        const expected = '85:23 85:24 decl, 86:13 86:14'
+        it('finds parameters refs from default parameters declaration', () => {
+          expectRanges(1288, expected)
+        })
+        it('finds parameters refs from default parameters', () => {
+          expectRanges(1330, expected)
+        })
+      }
+      {
+        const expected = '95:0 95:1 mut, 97:23 97:24, 97:30 97:31'
+        it('does not mistake variable references with named parameter', () => {
+          expectRanges(1468, expected)
+        })
+        it('finds refs from variables used as positional parameter', () => {
+          expectRanges(1532, expected)
+        })
+        it('finds refs from variables assigned to named parameter', () => {
+          expectRanges(1539, expected)
+        })
+      }
+      it('does not mistake named parameter with variable references', () => {
+        // expectRanges(1495, '96:19 96:20')
+        expectRanges(1495, '')
+      })
+      describe('in nested scopes', () => {
+        {
+          const expected = [
+            '99:20 99:21 decl',
+            '100:24 100:25',
+            '102:28 102:29',
+            '103:25 103:26',
+            '104:8 104:9',
+          ]
+          it('finds refs in nested scopes from parameter declaration', () => {
+            expectRanges(1563, expected)
+          })
+          it('finds refs in nested scopes from outter local scope variables', () => {
+            expectRanges(1721, expected)
+          })
+          it('finds refs in nested scopes from outter local scope named param', () => {
+            expectRanges(1597, expected)
+          })
+          it('finds refs in nested scopes from inner named param', () => {
+            expectRanges(1668, expected)
+          })
+          it('finds refs in nested scopes from outter positionnal param', () => {
+            expectRanges(1710, expected)
+          })
+        }
+        {
+          const expected = '99:23 99:24 decl, 100:38 100:39'
+          it('does not mistake inner scope with local scope from params', () => {
+            expectRanges(1566, expected)
+          })
+          it('does not mistake inner scope with local scope from variable', () => {
+            expectRanges(1611, expected)
+          })
+        }
+      })
+    })
   })
 })

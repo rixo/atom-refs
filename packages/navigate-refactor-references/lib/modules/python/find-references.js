@@ -9,6 +9,9 @@ const CLASS_DEF = 'class_definition'
 const FUNC_DEF = 'function_definition'
 const IDENTIFIER = 'identifier'
 const ERROR = 'ERROR'
+const PARAMETERS = 'parameters'
+const DEFAULT_PARAMETER = 'default_parameter'
+const KEYWORD_ARGUMENT = 'keyword_argument'
 
 const isAssign = node => {
   const p1 = node.parent
@@ -23,8 +26,18 @@ const declTypes = [
   'class_definition',
   'function_definition',
 ]
-const isDecl = node => {
-  return declTypes.some(t => node.type === t)
+const isDecl = node =>
+  declTypes.some(t => node.type === t) || isParamDecl(node)
+
+const isParamDecl = node => {
+  const {type, parent} = node
+  if (!parent) {
+    return false
+  }
+  const {type: ptype} = parent
+  return type === IDENTIFIER && (
+    ptype === PARAMETERS || ptype === DEFAULT_PARAMETER
+  )
 }
 
 const isWrite = node => isAssign(node) || isDecl(node)
@@ -63,12 +76,17 @@ const isScopeNode = ({type}) => scopeTypes.some(t => type === t)
 
 // const isIdentifier = node => node.type === 'identifier'
 
-const isBinding = ({type, parent}) => {
+const isBinding = node => {
+  const {type, parent} = node
   if (type === FUNC_DEF || type == CLASS_DEF) {
     return true
   } else if (type === IDENTIFIER) {
     const ptype = parent && parent.type
-    return ptype !== CLASS_DEF && ptype !== FUNC_DEF
+    if (ptype === KEYWORD_ARGUMENT && parent.firstChild === node) {
+      return false
+    } else {
+      return ptype !== CLASS_DEF && ptype !== FUNC_DEF
+    }
   } else {
     return false
   }
@@ -145,6 +163,12 @@ const getBindingName = (getSrc, node) => {
   }
 }
 
+const formatRange = ({
+  start: {row: r0, column: c0},
+  end: {row: r1, column: c1},
+  type,
+}) => `${r0}:${c0} ${r1}:${c1}${type ? ` ${type}` : ''}`
+
 export default (ast, loc) => {
   // console.log('loc', loc)
   const {code} = ast
@@ -173,7 +197,7 @@ export default (ast, loc) => {
   const testTargetName = node => getBindingName(getSrc, node) === targetName
   const targetScopeNode = getInnerScopeNode(cursorNode)
   const rootScopeNode = findRootScope(cursorNode, testTargetName) || ast.rootNode
-  debug('rootScopeNode', rootScopeNode.src)
+  // debug('rootScopeNode', rootScopeNode.src)
   down(rootScopeNode, node => {
     if (isBinding(node) && testTargetName(node)) {
       pushNode(node)
@@ -186,5 +210,6 @@ export default (ast, loc) => {
       }
     }
   })
+  debug('found ranges', ranges.map(formatRange).join(', '))
   return ranges
 }

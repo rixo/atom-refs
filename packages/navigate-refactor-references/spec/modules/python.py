@@ -83,6 +83,23 @@ def func(a):
 %time func 1
 
 #%%
-def func_with_args(a, b, c = None, d = None):
+def func1_with_args(a, b = 'b', c = None, d = 'd'):
     print(a, b, c, d)
-func_with_args(1, c = 3, b = 2)
+
+def func2_with_args(a, b, c = None, d = None):
+    print(a, b, c, d)
+
+def func3_with_args(a, b, c):
+    a = b = c
+    print(a)
+
+c = 'x'
+func1_with_args(1, c = 3, b = 2)
+func3_with_args(a = 1, c, b = c)
+
+def func4_with_args(a, b, c):
+    func1_with_args(a = a, b = c, c = b)
+    def inner_func(b, c):
+        func1_with_args(a = a, b = c, c = b)
+    inner_func(c, b = c, a)
+    x = a
