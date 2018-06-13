@@ -3,7 +3,8 @@
 import {SKIP, up, down} from '../util/traverse'
 import assert from 'assert'
 import {Range} from 'atom'
-import {debug} from '../../config'
+import {Debug} from '../../config'
+const debug = Debug('python.findReferences')
 
 const CLASS_DEF = 'class_definition'
 const FUNC_DEF = 'function_definition'
@@ -12,6 +13,7 @@ const ERROR = 'ERROR'
 const PARAMETERS = 'parameters'
 const DEFAULT_PARAMETER = 'default_parameter'
 const KEYWORD_ARGUMENT = 'keyword_argument'
+const COMMENT = 'comment'
 
 const isAssign = node => {
   const p1 = node.parent
@@ -53,28 +55,42 @@ const isGlobalAt = (scopeNode, testTargetName) => down(scopeNode, node => {
   }
 }) || false
 
+const isRightSideDefaultParam = node => {
+  const {parent, type} = node
+  if (!parent || type !== IDENTIFIER) {
+    return false
+  }
+  const {type: ptype} = parent
+  return ptype === DEFAULT_PARAMETER && parent.child(2) === node
+}
+
 const findRootScope = (fromNode, testTargetName) => {
+  // very special case, right side value of default parameter
+  // `def foo(a, b = a):` 2nd `a` should not refer to first one
+  // but outer scope
+  let excludedNode
+  if (isRightSideDefaultParam(fromNode)) {
+    excludedNode = up(fromNode, node => {
+      if (node.type === FUNC_DEF) {
+        return node
+      }
+    })
+  }
   return up(fromNode, node => {
+    if (node === excludedNode) {
+      return
+    }
     if (isScopeNode(node) && isShadowedAt(node, testTargetName)) {
       return node
     }
   })
 }
 
-const getInnerScopeNode = node => up(node, node => {
-  if (isScopeNode(node)) {
-    return node
-  }
-})
-
-// const isScopeNode = node => node.type === 'function_definition'
 const scopeTypes = [
   'class_definition',
   'function_definition',
 ]
 const isScopeNode = ({type}) => scopeTypes.some(t => type === t)
-
-// const isIdentifier = node => node.type === 'identifier'
 
 const isBinding = node => {
   const {type, parent} = node
@@ -124,10 +140,12 @@ const findIndentifierAt = (node, loc) => down(node, node => {
   }
 })
 
+const noComment = ({type}) => type !== COMMENT
+
 const getBindingIdentifier = node => {
   const {type, children} = node
   if (type === CLASS_DEF || type === FUNC_DEF) {
-    const child1 = children && children[1]
+    const child1 = children && children.filter(noComment)[1]
     if (!child1) {
       return
     }
@@ -169,6 +187,17 @@ const formatRange = ({
   type,
 }) => `${r0}:${c0} ${r1}:${c1}${type ? ` ${type}` : ''}`
 
+const visitFunctionRightSideParameters = (scope, testTargetName, pushNode) => {
+  if (scope.type === FUNC_DEF) {
+    const params = down(scope, PARAMETERS)
+    down(params, node => {
+      if (isRightSideDefaultParam(node) && testTargetName(node)) {
+        pushNode(node, undefined)
+      }
+    })
+  }
+}
+
 export default (ast, loc) => {
   // console.log('loc', loc)
   const {code} = ast
@@ -183,29 +212,46 @@ export default (ast, loc) => {
   }
   // find references
   const ranges = []
-  const pushNode = node => {
+  const pushNode = (...args) => {
+    const [node, type] = args
     const range = bindingRange(node)
     if (range) {
       ranges.push(range)
-      if (isAssign(node)) {
-        range.type = 'mut'
-      } else if (isDecl(node)) {
-        range.type = 'decl'
+      if (args.length > 1) {
+        range.type = type
+      } else {
+        if (isAssign(node)) {
+          range.type = 'mut'
+        } else if (isDecl(node)) {
+          range.type = 'decl'
+        }
       }
     }
   }
   const testTargetName = node => getBindingName(getSrc, node) === targetName
-  const targetScopeNode = getInnerScopeNode(cursorNode)
+  // the scope that will be traversed to find references: this is the first
+  // parent scope where an identifier with the same name is written
   const rootScopeNode = findRootScope(cursorNode, testTargetName) || ast.rootNode
-  // debug('rootScopeNode', rootScopeNode.src)
+  if (debug.enabled) {
+    debug('rootScopeNode', rootScopeNode.src)
+  }
   down(rootScopeNode, node => {
     if (isBinding(node) && testTargetName(node)) {
-      pushNode(node)
+      // very special case of right side of named params, that should
+      // be considered in the outer scope even if they're physically in
+      // the function's scope
+      if (!isRightSideDefaultParam(node)) {
+        pushNode(node)
+      }
     }
-    // skip scopes where target identifier is shadowed
-    if (node !== targetScopeNode && isScopeNode(node)) {
+    // do not enter scopes where target identifier is shadowed, except
+    // if this is our target scope
+    if (node !== rootScopeNode && isScopeNode(node)) {
       const shadowed = isShadowedAt(node, testTargetName)
       if (shadowed) {
+        // very special case of right side named params: even if we skip
+        // a function, we must look into its parameters
+        visitFunctionRightSideParameters(node, testTargetName, pushNode)
         return SKIP
       }
     }

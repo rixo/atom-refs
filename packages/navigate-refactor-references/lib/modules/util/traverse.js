@@ -6,7 +6,16 @@ export const SKIP = Symbol('skip')
 const typeKey = 'type'
 const childrenKey = 'children'
 
+const createSelector = type => node => {
+  if (node.type === type) {
+    return node
+  }
+}
+
 export function down(root, handler) {
+  if (typeof handler === 'string') {
+    handler = createSelector(handler)
+  }
   let done = false
   let result = void 0
   const visit = node => {
@@ -40,6 +49,9 @@ export function down(root, handler) {
 }
 
 export function up(node, handler) {
+  if (typeof handler === 'string') {
+    handler = createSelector(handler)
+  }
   let cursor = node.parent
   while (cursor) {
     const result = handler(cursor)

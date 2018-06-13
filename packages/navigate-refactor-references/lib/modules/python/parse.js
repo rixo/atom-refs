@@ -4,8 +4,8 @@ import Parser from 'tree-sitter'
 import Python from 'tree-sitter-python'
 import {Range} from 'atom'
 import {down} from '../util/traverse'
-// import assert from 'assert'
-// import {debug} from '../../config'
+import {Debug} from '../../config'
+const debug = Debug('python')
 
 const parser = new Parser()
 parser.setLanguage(Python)
@@ -13,18 +13,26 @@ parser.setLanguage(Python)
 const nodeRange = ({startPosition, endPosition}) =>
   Range.fromObject([startPosition, endPosition])
 
+function debugSrc() {
+  const code = this.tree.code
+  return code && code.substring(this.startIndex, this.endIndex)
+}
+
 export default ({code}) => {
   // TODO incremental
   const ast = parser.parse(code)
   // TODO remove debug util src
   ast.code = code
-  if (!ast.rootNode.constructor.prototype.hasOwnProperty('src')) {
-    Object.defineProperty(ast.rootNode.constructor.prototype, 'src', {
-      get() {
-        const code = this.tree.code
-        return code && code.substring(this.startIndex, this.endIndex)
-      },
-    })
+  // add `src` debug property to SyntaxNode's prototype
+  if (debug.enabled) {
+    // it would be better to monkey patch SyntaxNode directly, but the
+    // class is not explicitely exposed...
+    const proto = ast.rootNode.constructor.prototype
+    if (!proto.hasOwnProperty('src')) {
+      Object.defineProperty(proto, 'src', {
+        get: debugSrc,
+      })
+    }
   }
   // error
   const getSrc = ({startIndex: a, endIndex: b}) => code.substring(a, b)

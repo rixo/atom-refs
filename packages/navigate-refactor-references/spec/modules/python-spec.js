@@ -327,7 +327,7 @@ c = 3
             expectRanges(1563, expected)
           })
           it('finds refs in nested scopes from outter local scope variables', () => {
-            expectRanges(1721, expected)
+            expectRanges(1717, expected)
           })
           it('finds refs in nested scopes from outter local scope named param', () => {
             expectRanges(1597, expected)
@@ -336,7 +336,7 @@ c = 3
             expectRanges(1668, expected)
           })
           it('finds refs in nested scopes from outter positionnal param', () => {
-            expectRanges(1710, expected)
+            expectRanges(1706, expected)
           })
         }
         {
@@ -346,6 +346,36 @@ c = 3
           })
           it('does not mistake inner scope with local scope from variable', () => {
             expectRanges(1611, expected)
+          })
+        }
+      })
+      describe('with param with same name as variable', () => {
+        {
+          /**
+           * This case is very spicy because in the param list, we've got
+           * both write (first c5) and read (second c5), both in function
+           * scope (the write), AND outer scope (the read)...
+           *
+           *     c5 = 'c5'
+           *     def func5_with_args(c5, x = c5):
+           *         print(c5, x)
+           *     func5_with_args(1)
+           */
+          const expected = '107:0 107:2 mut, 108:28 108:30'
+          it('finds refs from outter variable', () => {
+            expectRanges(1724, expected)
+          })
+          it('finds refs from variable reference in parameter', () => {
+            expectRanges(1762, expected)
+          })
+        }
+        {
+          const expected = '108:20 108:22 decl, 109:10 109:12'
+          it('does not find refs from param with same name', () => {
+            expectRanges(1754, expected)
+          })
+          it('does not find refs from param with same name', () => {
+            expectRanges(1777, expected)
           })
         }
       })

@@ -100,6 +100,35 @@ func3_with_args(a = 1, c, b = c)
 def func4_with_args(a, b, c):
     func1_with_args(a = a, b = c, c = b)
     def inner_func(b, c):
-        func1_with_args(a = a, b = c, c = b)
+        func1_with_args(a = a, b, c = b)
     inner_func(c, b = c, a)
     x = a
+
+#%%
+c5 = 'c5'
+def func5_with_args(c5, x = c5):
+    print(c5, x)
+func5_with_args(1)
+
+#%% classes
+
+class Foo:
+    def method(self, a, b, c = 1):
+        x = a + b
+        print(c + x)
+        # inner class
+        class Foo:
+            def method(self, a, b, c = b):
+                print(c)
+        # ref to inner class & local vars
+        foo = Foo(a, x, c)
+        # shadowing method name
+        def method(a, b = x, x = b):
+            print(a, b = a, x)
+        # calling local function
+        method(a = b, b, x = c)
+    # class attribute & ref to self
+    foo = Foo(a, b)
+# ref to global class
+foo = Foo()
+foo.method(1, 2, c = 3)
