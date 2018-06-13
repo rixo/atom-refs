@@ -82,15 +82,7 @@ def func(a):
     %time print 'foo'
 %time func 1
 
-# class Rixo:
-#     name = 'eric'
-#     def __init__(self, name):
-#         self.name = name
-#     def go(self):
-#         print(self.name)
-#         return 'yo'
-#
-# me = Rixo("Éric")
-# me.go()
-# # class Rixo:
-#     # def __init__(self, arg):
+#%%
+def func_with_args(a, b, c = None, d = None):
+    print(a, b, c, d)
+func_with_args(1, c = 3, b = 2)

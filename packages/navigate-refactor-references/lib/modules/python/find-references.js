@@ -8,6 +8,7 @@ import {debug} from '../../config'
 const CLASS_DEF = 'class_definition'
 const FUNC_DEF = 'function_definition'
 const IDENTIFIER = 'identifier'
+const ERROR = 'ERROR'
 
 const isAssign = node => {
   const p1 = node.parent
@@ -96,9 +97,11 @@ const isWrittenAt = (scope, testName) => {
 const findIndentifierAt = (node, loc) => down(node, node => {
   if (isBinding(node)) {
     const identifier = getBindingIdentifier(node)
-    const {startIndex, endIndex} = identifier
-    if (startIndex <= loc && endIndex > loc) {
-      return node
+    if (identifier) {
+      const {startIndex, endIndex} = identifier
+      if (startIndex <= loc && endIndex > loc) {
+        return node
+      }
     }
   }
 })
@@ -107,7 +110,12 @@ const getBindingIdentifier = node => {
   const {type, children} = node
   if (type === CLASS_DEF || type === FUNC_DEF) {
     const child1 = children && children[1]
-    assert(child1)
+    if (!child1) {
+      return
+    }
+    if (child1.type === ERROR) {
+      return
+    }
     assert(child1.type === IDENTIFIER)
     return child1
   } else {
@@ -121,9 +129,19 @@ const nodeRange = ({startPosition, endPosition}) =>
 const bindingRange = bindingNode => {
   const {type} = bindingNode
   if (type === FUNC_DEF || type === CLASS_DEF) {
-    return nodeRange(getBindingIdentifier(bindingNode))
+    const identifier = getBindingIdentifier(bindingNode)
+    if (identifier) {
+      return nodeRange(identifier)
+    }
   } else {
     return nodeRange(bindingNode)
+  }
+}
+
+const getBindingName = (getSrc, node) => {
+  const identifier = getBindingIdentifier(node)
+  if (identifier) {
+    return getSrc(identifier)
   }
 }
 
@@ -135,21 +153,24 @@ export default (ast, loc) => {
   if (!cursorNode) {
     return []
   }
+  const targetName = getBindingName(getSrc, cursorNode)
+  if (!targetName) {
+    return []
+  }
   // find references
   const ranges = []
   const pushNode = node => {
     const range = bindingRange(node)
-    ranges.push(range)
-    if (isAssign(node)) {
-      range.type = 'mut'
-    } else if (isDecl(node)) {
-      range.type = 'decl'
+    if (range) {
+      ranges.push(range)
+      if (isAssign(node)) {
+        range.type = 'mut'
+      } else if (isDecl(node)) {
+        range.type = 'decl'
+      }
     }
   }
-  const getBindingName = node => getSrc(getBindingIdentifier(node))
-  const targetName = getBindingName(cursorNode)
-  // const testTargetName = node => getSrc(node) === targetName
-  const testTargetName = node => getBindingName(node) === targetName
+  const testTargetName = node => getBindingName(getSrc, node) === targetName
   const targetScopeNode = getInnerScopeNode(cursorNode)
   const rootScopeNode = findRootScope(cursorNode, testTargetName) || ast.rootNode
   debug('rootScopeNode', rootScopeNode.src)
