@@ -134,7 +134,13 @@ function createFinder() {
   const hackUseItemNameOrAliasLoc = node => node.alias
     ? hackUseItemAliasLoc(node)
     : hackUseItemNameLoc(node)
-  const aliasableName = ({name, alias}) => alias || name
+  const aliasableName = ({name, alias}) => {
+    let result = alias || name
+    // `$` is detected as a variable but its 'name' is an object
+    if (typeof result === 'string') {
+      return result
+    }
+  }
   const hackPropertyNameLoc = ({loc: {start}, name: {length}}) => {
     return {
       start,
@@ -274,6 +280,11 @@ function createFinder() {
       kinds.push('identifier')
     }
     const toName = aliasableName(toNode)
+    // exit early if we fail to resolve variable name at the
+    // current cursor location
+    if (!toName) {
+      return ranges
+    }
     const toNameLower = toName.toLowerCase()
     const testName = toCallable || toClass
       ? name => name && name.toLowerCase() === toNameLower
