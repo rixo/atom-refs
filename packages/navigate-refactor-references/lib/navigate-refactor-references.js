@@ -41,6 +41,7 @@ export const activate = () => {
     state.parseError = parsed.error
     updateReferences(state)
   }
+
   // let bufferChangedTimeout = null
   // const onBufferChanged = () => {
   //   clearTimeout(bufferChangedTimeout)
@@ -96,7 +97,10 @@ export const activate = () => {
       )
       editor.onDidDestroy(() => {
         if (state.linter) {
-          state.linter.setMessages(editor.getPath(), [])
+          const editorPath = editor.getPath()
+          if (editorPath) {
+            state.linter.setMessages(editorPath, [])
+          }
         }
       })
       onChangeGrammar()
@@ -188,7 +192,7 @@ const displayParseError = state => {
     const {message} = error
     if (error instanceof SyntaxError && (error.loc || error.range)) {
       const range = parseErrorRange(error)
-      if (linter) {
+      if (linter && editorPath) {
         linter.setMessages(editorPath, [{
           severity: 'error',
           location: {
@@ -213,7 +217,7 @@ const displayParseError = state => {
         markers.push(marker)
       }
     } else {
-      if (linter) {
+      if (linter && editorPath) {
         linter.setMessages(editorPath, [{
           severity: 'error',
           location: {
@@ -257,7 +261,9 @@ const updateReferences = state => {
   } else {
     if (linter) {
       const editorPath = editor.getPath()
-      linter.setMessages(editorPath, [])
+      if (editorPath) {
+        linter.setMessages(editorPath, [])
+      }
     }
   }
   // references
