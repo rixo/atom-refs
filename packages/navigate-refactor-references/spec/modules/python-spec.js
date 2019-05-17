@@ -1,4 +1,4 @@
-'use babel'
+/** @babel */
 
 import { parse, findReferences } from '../../lib/modules/python'
 import fs from 'fs'
