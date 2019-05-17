@@ -75,7 +75,7 @@ function createJsParser() {
       })
     } catch (err) {
       if (sourceType === 'script' && isModuleError(err)) {
-        return tryParse(code, 'module')
+        return parseAs(code, 'module')
       } else if (err instanceof SyntaxError && err.loc) {
         error = err
       } else {
