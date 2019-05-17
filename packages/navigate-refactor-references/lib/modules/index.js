@@ -1,10 +1,6 @@
 'use babel'
 
-const modules = [
-  require('./js'),
-  require('./php'),
-  require('./python'),
-]
+const modules = [require('./js'), require('./php'), require('./python')]
 
 const scopeModule = mapModulesByScope(modules)
 

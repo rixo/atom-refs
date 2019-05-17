@@ -1,8 +1,8 @@
 'use babel'
 
 import traverse from 'babel-traverse'
-import {locToRange} from '../util'
-import {debug} from '../config'
+import { locToRange } from '../util'
+import { debug } from '../config'
 
 export const findReferences = (ast, loc) => {
   let binding
@@ -37,58 +37,64 @@ const gatherRanges = binding => {
     ranges = [getDeclRange(binding)]
     refPaths = binding.referencePaths
       // filter ObjectPattern
-      .filter((p) => p.node !== binding.identifier)
+      .filter(p => p.node !== binding.identifier)
       // filter undefined for ImportDefault
-      .filter((p) => p)
+      .filter(p => p)
       // filter exports
-      .filter((p) => !p.isExportDeclaration())
+      .filter(p => !p.isExportDeclaration())
   }
 
-  ranges = ranges.concat(refPaths.map(p => {
-    const range = locToRange(p.node.loc)
-    range.type = 'ref'
-    if (p.parentPath.isObjectProperty()) {
-      const { key, shorthand } = p.parentPath.node
-      range.shorthand = shorthand
-      if (!shorthand) {
-        range.key = locToRange(key.loc)
+  ranges = ranges.concat(
+    refPaths.map(p => {
+      const range = locToRange(p.node.loc)
+      range.type = 'ref'
+      if (p.parentPath.isObjectProperty()) {
+        const { key, shorthand } = p.parentPath.node
+        range.shorthand = shorthand
+        if (!shorthand) {
+          range.key = locToRange(key.loc)
+        }
+        range.delimiter = ': '
       }
-      range.delimiter = ': '
-    }
-    return range
-  }))
+      return range
+    })
+  )
 
   // global doesn't has constantViolations
   if (binding.constantViolations) {
-    ranges = ranges.concat(binding.constantViolations.map(p => {
-      const node = p.node.left || p.node
-      const range = locToRange(node.loc)
-      range.type = 'mut'
-      return range
-    }))
+    ranges = ranges.concat(
+      binding.constantViolations.map(p => {
+        const node = p.node.left || p.node
+        const range = locToRange(node.loc)
+        range.type = 'mut'
+        return range
+      })
+    )
   }
 
-  ranges.sort((
-    {start: {column: ca, row: ra}},
-    {start: {column: cb, row: rb}}
-  ) => {
-    if (ra < rb) {
-      return -1
-    } else if (ra > rb) {
-      return 1
-    } else {
-      return ca - cb
+  ranges.sort(
+    (
+      { start: { column: ca, row: ra } },
+      { start: { column: cb, row: rb } }
+    ) => {
+      if (ra < rb) {
+        return -1
+      } else if (ra > rb) {
+        return 1
+      } else {
+        return ca - cb
+      }
     }
-  })
+  )
 
   return ranges
 }
 
 const getDeclRange = binding => {
-  const {path, identifier} = binding
+  const { path, identifier } = binding
   let range
   if (path.isImportSpecifier()) {
-    const {imported, local} = path.node
+    const { imported, local } = path.node
     range = locToRange(local.loc)
     range.shorthand = local.start === imported.start
     if (!range.shorthand) {
@@ -117,7 +123,7 @@ const findBinding = (ast, loc) => {
     throw new Error('AST required')
   }
   const touches = path => {
-    const {start, end} = path.node
+    const { start, end } = path.node
     if (end <= loc) {
       path.skip()
       return false
@@ -128,23 +134,26 @@ const findBinding = (ast, loc) => {
       return true
     }
   }
-  const isNode = node => ({node: ref}) => ref === node
-  const isLeftNode = node => ({node: {left: ref}}) => ref === node
+  const isNode = node => ({ node: ref }) => ref === node
+  const isLeftNode = node => ({ node: { left: ref } }) => ref === node
   // https://github.com/thejameskyle/babel-handbook/blob/master/translations/en/plugin-handbook.md
   const onIdentififer = path => {
     if (touches(path)) {
-      const {scope, node, node: {name}} = path
+      const {
+        scope,
+        node,
+        node: { name },
+      } = path
       if (!name) {
         return
       }
       const scopeBinding = scope.getBinding(name)
       if (
-        scopeBinding && (
-          scopeBinding.identifier === node
+        scopeBinding
+        && (scopeBinding.identifier === node
           || scopeBinding.referencePaths.some(isNode(node))
           // || scopeBinding.constantViolations.some(({node: {left: ref}}) => ref === node)
-          || scopeBinding.constantViolations.some(isLeftNode(node))
-        )
+          || scopeBinding.constantViolations.some(isLeftNode(node)))
       ) {
         binding = scopeBinding
         path.stop()
@@ -174,11 +183,14 @@ const findBinding = (ast, loc) => {
   return binding
 }
 
-const gatherGlobalBindings = (ast, {node: {name: searchName}}) => {
+const gatherGlobalBindings = (ast, { node: { name: searchName } }) => {
   const paths = []
   const visitor = {
     Identifier(path) {
-      const {scope, node: {name}} = path
+      const {
+        scope,
+        node: { name },
+      } = path
       if (name === searchName) {
         const scopeBinding = scope.getBinding(name)
         // if there's a binding, then it's not global!

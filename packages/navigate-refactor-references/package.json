@@ -1,7 +1,7 @@
 {
   "name": "navigate-refactor-references",
   "main": "./lib/navigate-refactor-references",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": {
     "name": "Rixo",
     "email": "rixo@rixo.fr"
@@ -33,6 +33,9 @@
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
+  "scripts": {
+    "prettier": "prettier --write lib/**/*.js"
+  },
   "dependencies": {
     "@babel/parser": "^7.0.0-beta.48",
     "babel-traverse": "^6.26.0",
@@ -44,5 +47,7 @@
     "tree-sitter-python": "^0.11.3",
     "underscore-plus": "^1.6.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "^1.17.1"
+  }
 }

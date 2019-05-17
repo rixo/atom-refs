@@ -1,11 +1,9 @@
 'use babel'
 
-import {lazy} from './util'
-import {debug} from '../config'
+import { lazy } from './util'
+import { debug } from '../config'
 
-const scopes = [
-  'text.html.php',
-]
+const scopes = ['text.html.php']
 
 /**
  * Considers `$this->name()` a call, but not `echo $this->name`.
@@ -28,10 +26,10 @@ const createParser = () => {
       withSource: true, // needed to determine precise function name loc
     },
   })
-  return ({code}) => {
+  return ({ code }) => {
     try {
       const ast = parser.parseCode(code)
-      return {ast}
+      return { ast }
     } catch (error) {
       if (error.lineNumber && error.columnNumber) {
         error.loc = {
@@ -39,7 +37,7 @@ const createParser = () => {
           column: error.columnNumber,
         }
       }
-      return {error}
+      return { error }
     }
   }
 }
@@ -54,24 +52,25 @@ export default {
 }
 
 function createFinder() {
-  const {locToRange} = require('../util')
-  const kindTester = kinds => ({kind}) => kinds.some(k => k === kind)
+  const { locToRange } = require('../util')
+  const kindTester = kinds => ({ kind }) => kinds.some(k => k === kind)
   const isClassyNode = kindTester(['class', 'interface', 'trait'])
   const isFunctionNode = kindTester(['function', 'method', 'closure'])
-  const isBindingNode = kindTester(
-    ['variable', 'parameter', 'constref', 'identifier']
-  )
-  const isThisLookup = ({node: p} = {}) =>
+  const isBindingNode = kindTester([
+    'variable',
+    'parameter',
+    'constref',
+    'identifier',
+  ])
+  const isThisLookup = ({ node: p } = {}) =>
     p && p.kind === 'propertylookup' && p.what.name === 'this'
   const $isCall = Symbol('isCall')
   const $isClassAccess = Symbol('isNew')
-  const doesTargetFunction = node =>
-    node.kind === 'function' || node[$isCall]
-  const doesTargetClass = node =>
-    node.kind === 'class' || node[$isClassAccess]
+  const doesTargetFunction = node => node.kind === 'function' || node[$isCall]
+  const doesTargetClass = node => node.kind === 'class' || node[$isClassAccess]
   const doesTargetGlobal = node =>
     doesTargetFunction(node) || doesTargetClass(node)
-  const isCall = ({node: p, parent: {node: pp} = {}} = {}) => {
+  const isCall = ({ node: p, parent: { node: pp } = {} } = {}) => {
     if (p) {
       if (p.kind === 'call') {
         return true
@@ -83,7 +82,7 @@ function createFinder() {
     }
     return false
   }
-  const isClassAccess = ({node: p} = {}) => {
+  const isClassAccess = ({ node: p } = {}) => {
     if (p) {
       if (p.kind === 'new' || p.kind === 'staticlookup') {
         return true
@@ -94,16 +93,16 @@ function createFinder() {
   const NL = /\r\n|\n|\r/g
   const indexOf = (source, name) => source.indexOf(name)
   const hackFunctionNameLoc = (
-    {loc: {start, source}, name},
-    indexOfName = indexOf,
+    { loc: { start, source }, name },
+    indexOfName = indexOf
   ) => {
     // const nameOffset = source.indexOf(name)
     const nameOffset = indexOfName(source, name)
     const lines = source.substr(0, nameOffset).split(NL)
     const lineOffset = lines.length - 1
     const startLine = start.line + lineOffset
-    const startColumn = lines[lineOffset].length
-      + (lineOffset === 0 ? start.column : 0)
+    const startColumn =
+      lines[lineOffset].length + (lineOffset === 0 ? start.column : 0)
     const startOffset = start.offset + nameOffset
     return {
       start: {
@@ -129,19 +128,18 @@ function createFinder() {
     }
   }
   const hackUseItemAliasLoc = node =>
-    hackFunctionNameLoc({...node, name: node.alias}, indexOfAlias)
+    hackFunctionNameLoc({ ...node, name: node.alias }, indexOfAlias)
   const hackUseItemNameLoc = hackFunctionNameLoc
-  const hackUseItemNameOrAliasLoc = node => node.alias
-    ? hackUseItemAliasLoc(node)
-    : hackUseItemNameLoc(node)
-  const aliasableName = ({name, alias}) => {
-    let result = alias || name
+  const hackUseItemNameOrAliasLoc = node =>
+    node.alias ? hackUseItemAliasLoc(node) : hackUseItemNameLoc(node)
+  const aliasableName = ({ name, alias }) => {
+    const result = alias || name
     // `$` is detected as a variable but its 'name' is an object
     if (typeof result === 'string') {
       return result
     }
   }
-  const hackPropertyNameLoc = ({loc: {start}, name: {length}}) => {
+  const hackPropertyNameLoc = ({ loc: { start }, name: { length } }) => {
     return {
       start,
       end: {
@@ -157,11 +155,13 @@ function createFinder() {
     const inNamespaces = []
     const inClasses = []
     const inFunctions = []
-    const touches = ({start, end}) =>
-      start.offset <= loc && end.offset > loc
+    const touches = ({ start, end }) => start.offset <= loc && end.offset > loc
     const finder = path => {
-      const {node, parent} = path
-      const {kind, loc: {start, end}} = node
+      const { node, parent } = path
+      const {
+        kind,
+        loc: { start, end },
+      } = node
       // namespace
       if (kind === 'namespace') {
         if (start.offset > loc) return STOP
@@ -207,8 +207,8 @@ function createFinder() {
         if (start.offset > loc) return STOP
         if (end.offset <= loc) return SKIP
         inFunctions.push(node)
-        const result = traverse(node.body, finder)
-          || traverse(node.arguments, finder)
+        const result =
+          traverse(node.body, finder) || traverse(node.arguments, finder)
         if (result) {
           return result
         } else {
@@ -233,12 +233,12 @@ function createFinder() {
         }
         return node
       } else if (kind === 'property') {
-        const {start, end} = hackPropertyNameLoc(node)
+        const { start, end } = hackPropertyNameLoc(node)
         if (start.offset > loc) return STOP
         if (end.offset <= loc) return SKIP
         return node
       } else if (kind === 'useitem') {
-        const {start, end} = hackUseItemNameOrAliasLoc(node)
+        const { start, end } = hackUseItemNameOrAliasLoc(node)
         if (start.offset > loc) return STOP
         if (end.offset <= loc) return SKIP
         return node
@@ -257,24 +257,25 @@ function createFinder() {
       }
     }
     const node = traverse(ast, finder)
-    return {node, inNamespaces, inFunctions, inClasses}
+    return { node, inNamespaces, inFunctions, inClasses }
   }
 
   const findVariableRanges = (toNode, root) => {
     const ranges = []
-    const {kind: toKind} = toNode
+    const { kind: toKind } = toNode
     const toCallable = toNode[$isCall] || toKind === 'function'
-    const toClass = toNode[$isClassAccess]
-      || toKind === 'class'
-      || toKind === 'useitem'
-    let kinds = []
+    const toClass =
+      toNode[$isClassAccess] || toKind === 'class' || toKind === 'useitem'
+    const kinds = []
     if (toKind === 'variable' || toKind === 'parameter') {
       kinds.push('variable', 'parameter')
     } else if (toKind === 'constref') {
       kinds.push('constref')
-    } else if (toCallable) { // before identifier
+    } else if (toCallable) {
+      // before identifier
       kinds.push('identifier', 'function')
-    } else if (toClass) { // before identifier
+    } else if (toClass) {
+      // before identifier
       kinds.push('identifier', 'class', 'useitem')
     } else if (toKind === 'identifier') {
       kinds.push('identifier')
@@ -286,15 +287,16 @@ function createFinder() {
       return ranges
     }
     const toNameLower = toName.toLowerCase()
-    const testName = toCallable || toClass
-      ? name => name && name.toLowerCase() === toNameLower
-      : name => name === toName
-    const isOurKind = ({kind}) => kinds.some(k => k === kind)
+    const testName =
+      toCallable || toClass
+        ? name => name && name.toLowerCase() === toNameLower
+        : name => name === toName
+    const isOurKind = ({ kind }) => kinds.some(k => k === kind)
     const isScope = node =>
       isFunctionNode(node) || isClassyNode(node) || node.kind === 'namespace'
     const getNodeName = node => {
-      const {kind, name, alias} = node
-      let result = kind === 'useitem' && alias || name
+      const { kind, name, alias } = node
+      const result = (kind === 'useitem' && alias) || name
       // must handle case {name: {kind: 'identifier', name: '...'}}
       if (typeof result === 'object' && result) {
         return getNodeName(result)
@@ -302,9 +304,9 @@ function createFinder() {
         return result
       }
     }
-    const visitor = ({node, parent}) => {
+    const visitor = ({ node, parent }) => {
       const visibleName = getNodeName(node)
-      const {kind, loc} = node
+      const { kind, loc } = node
       // if (toClass && kind === 'useitem' && testName(node.alias)) {
       //   const nameLoc = hackUseItemAliasLoc(node)
       //   const range = locToRange(nameLoc)
@@ -314,7 +316,7 @@ function createFinder() {
       if (testName(visibleName)) {
         if (isOurKind(node)) {
           let range = locToRange(loc)
-          const {node: p = {}} = parent || {}
+          const { node: p = {} } = parent || {}
           if (toCallable) {
             if (kind === 'function') {
               const nameLoc = hackFunctionNameLoc(node)
@@ -337,7 +339,8 @@ function createFinder() {
             } else if (!isClassAccess(parent)) {
               return
             }
-          } else { // normal variables
+          } else {
+            // normal variables
             if (isCall(parent) || isClassAccess(parent)) {
               return
             }
@@ -372,9 +375,9 @@ function createFinder() {
 
   const findClassRanges = (classNode, identNode) => {
     const ranges = []
-    const {kind: identKind, name: identName} = identNode
-    const visitor = ({node, parent}) => {
-      const {kind, name, loc} = node
+    const { kind: identKind, name: identName } = identNode
+    const visitor = ({ node, parent }) => {
+      const { kind, name, loc } = node
       // don't enter another class
       if (node !== classNode && isClassyNode(node)) return SKIP
       if (name === identName) {
@@ -442,7 +445,7 @@ function createFinder() {
     if (!identNode) {
       return result
     }
-    const {kind: identKind, name: identName} = identNode
+    const { kind: identKind, name: identName } = identNode
     debug('Found', identNode)
     if (
       identName === 'this'
@@ -488,12 +491,12 @@ function traverse(root, handler) {
   //   : handler
   // const visit = (node, parent, path) => {
   const visit = step => {
-    const {node} = step
+    const { node } = step
     if (done) {
       return
     }
     if (Array.isArray(node)) {
-      node.some((child, i) => visit({key: i, node: child, parent: step}))
+      node.some((child, i) => visit({ key: i, node: child, parent: step }))
       return
     }
     if (!node || typeof node[typeKey] !== 'string') {
@@ -514,13 +517,13 @@ function traverse(root, handler) {
       for (const prop in node) {
         const child = node[prop]
         if (typeof child === 'object') {
-          visit({key: prop, node: child, parent: step})
+          visit({ key: prop, node: child, parent: step })
         }
       }
     }
     return done
   }
   // visit(root, null, null)
-  visit({node: root})
+  visit({ node: root })
   return result
 }

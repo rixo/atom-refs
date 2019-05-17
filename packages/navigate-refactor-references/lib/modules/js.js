@@ -1,7 +1,7 @@
 'use babel'
 
-import {lazy} from './util'
-import {createLocator} from '../util'
+import { lazy } from './util'
+import { createLocator } from '../util'
 
 const scopes = [
   'source.js',
@@ -13,7 +13,9 @@ const scopes = [
 ]
 
 const parse = lazy(createParser)
-const findReferences = lazy(() => require('./js-find-occurrences').findReferences)
+const findReferences = lazy(
+  () => require('./js-find-occurrences').findReferences
+)
 
 export default {
   scopes,
@@ -22,7 +24,7 @@ export default {
 }
 
 function createParser() {
-  const {parse} = require('babylon')
+  const { parse } = require('babylon')
   const isBabelParser = false
   // const parsePlugins = [
   //   'estree',
@@ -37,7 +39,7 @@ function createParser() {
   const ERR_MODULE = `'import' and 'export' may appear only with 'sourceType: "module"'`
   const isModuleError = err =>
     err instanceof SyntaxError
-  && err.message.substr(0, ERR_MODULE.length) === ERR_MODULE
+    && err.message.substr(0, ERR_MODULE.length) === ERR_MODULE
 
   const defaultSourceType = isBabelParser ? 'unambiguous' : 'script'
 
@@ -51,7 +53,7 @@ function createParser() {
 
   const parseSourceCode = (editor, code) => {
     if (editor === null) {
-      return {code}
+      return { code }
     }
     let sourceType
     if (isHtml(editor)) {
@@ -66,10 +68,10 @@ function createParser() {
       }
     }
     const locator = createLocator(code)
-    return {code, locator, sourceType}
+    return { code, locator, sourceType }
   }
 
-  const parseAs = ({code, editor}, sourceType = defaultSourceType) => {
+  const parseAs = ({ code, editor }, sourceType = defaultSourceType) => {
     let ast
     let error
     const {
@@ -87,7 +89,7 @@ function createParser() {
       })
     } catch (err) {
       if (sourceType === 'script' && isModuleError(err)) {
-        return parseAs({code: source, editor: null}, 'module')
+        return parseAs({ code: source, editor: null }, 'module')
       } else if (err instanceof SyntaxError && err.loc) {
         error = err
       } else {
@@ -95,7 +97,7 @@ function createParser() {
         throw err
       }
     }
-    return {ast, error, locator}
+    return { ast, error, locator }
   }
 
   return state => parseAs(state, defaultSourceType)
