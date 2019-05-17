@@ -48,6 +48,6 @@
     "underscore-plus": "^1.6.6"
   },
   "devDependencies": {
-    "@rixo/eslint-config-atom": "0.1.0-alpha.19"
+    "@rixo/eslint-config-atom": "^0.3.0"
   }
 }
