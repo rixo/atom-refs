@@ -9,6 +9,7 @@ const scopes = [
   'source.babel',
   'text.html.basic',
   'text.html.vue',
+  'source.svelte',
 ]
 
 const parse = lazy(createParser)
@@ -40,12 +41,9 @@ function createParser() {
 
   const defaultSourceType = isBabelParser ? 'unambiguous' : 'script'
 
-  const scriptRe = /(^[\s\S]*<script\b[^>]*>)([\s\S]*)<\/script>/g
+  const scriptRe = /(^[\s\S]*<script\b[^>]*>)([\s\S]*)<\/script>/
 
-  const htmlScopes = [
-    'text.html.vue',
-    'text.html.basic',
-  ]
+  const htmlScopes = ['source.svelte', 'text.html.vue', 'text.html.basic']
   const isHtml = editor => {
     const scopeName = editor.getGrammar().scopeName
     return htmlScopes.some(scope => scope === scopeName)

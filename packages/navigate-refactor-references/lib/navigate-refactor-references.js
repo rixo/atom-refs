@@ -42,12 +42,11 @@ export const activate = () => {
     updateReferences(state)
   }
 
-  // let bufferChangedTimeout = null
-  // const onBufferChanged = () => {
-  //   clearTimeout(bufferChangedTimeout)
-  //   bufferChangedTimeout = setTimeout(applyBufferChanged, 100)
-  // }
-  const onBufferChanged = applyBufferChanged
+  let bufferChangedTimeout = null
+  const onBufferChanged = () => {
+    clearTimeout(bufferChangedTimeout)
+    bufferChangedTimeout = setTimeout(applyBufferChanged, 100)
+  }
 
   const updateCursorPositions = () => {
     cursorMovedTimeout = null
