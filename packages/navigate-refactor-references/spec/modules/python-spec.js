@@ -1,7 +1,11 @@
 /** @babel */
 
-import { parse, findReferences } from '../../lib/modules/python'
 import fs from 'fs'
+
+import dedent from 'dedent'
+
+import { parse, findReferences } from '../../lib/modules/python'
+
 import { addRangeMatchers } from './util'
 
 describe('modules/python', () => {
@@ -20,11 +24,11 @@ describe('modules/python', () => {
       expect(result.error).toEqual(null)
     })
     it('report parse errors', () => {
-      const code = `
-a = 1
-b 2
-c = 3
-`
+      const code = dedent`
+        a = 1
+        b 2
+        c = 3
+      `
       const result = parse({ code })
       expect(result).toBeDefined()
       expect(Array.isArray(result.error)).toBe(true)
@@ -37,9 +41,9 @@ c = 3
         const {
           range: { start, end },
         } = err
-        expect(start.row).toBe(2)
+        expect(start.row).toBe(1)
         expect(start.column).toBe(2)
-        expect(end.row).toBe(2)
+        expect(end.row).toBe(1)
         expect(end.column).toBe(3)
       }
     })

@@ -36,7 +36,7 @@ export default ({ code }) => {
   }
   // error
   const getSrc = ({ startIndex: a, endIndex: b }) => code.substring(a, b)
-  let errors = []
+  const errors = []
   if (ast.rootNode.hasError()) {
     const ignoreRows = []
     const isIgnoredRow = (startRow, endRow) =>
