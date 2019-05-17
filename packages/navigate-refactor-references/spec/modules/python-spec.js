@@ -1,11 +1,10 @@
 'use babel'
 
-import {parse, findReferences} from '../../lib/modules/python'
+import { parse, findReferences } from '../../lib/modules/python'
 import fs from 'fs'
-import {addRangeMatchers} from './util'
+import { addRangeMatchers } from './util'
 
 describe('modules/python', () => {
-
   beforeEach(addRangeMatchers)
 
   describe('parse({code})', () => {
@@ -15,26 +14,29 @@ describe('modules/python', () => {
     })
     it('code to ast', () => {
       const code = 'simple = True'
-      const result = parse({code})
+      const result = parse({ code })
       expect(result).toBeDefined()
       expect(result.ast).toBeDefined()
       expect(result.error).toEqual(null)
     })
     it('report parse errors', () => {
-      const code =
-`
+      const code = `
 a = 1
 b 2
 c = 3
 `
-      const result = parse({code})
+      const result = parse({ code })
       expect(result).toBeDefined()
       expect(Array.isArray(result.error)).toBe(true)
       expect(result.error.length).toBe(1)
       {
-        const {error: [err]} = result
+        const {
+          error: [err],
+        } = result
         expect(err.range).toBeDefined()
-        const {range: {start, end}} = err
+        const {
+          range: { start, end },
+        } = err
         expect(start.row).toBe(2)
         expect(start.column).toBe(2)
         expect(end.row).toBe(2)
@@ -43,29 +45,27 @@ c = 3
     })
     describe('ipython/jupyter', () => {
       it('does not flag line magics as errors', () => {
-        const code =
-          `
+        const code = `
           %alias bracket echo "Input in brackets: <%l>"
           %autocall 1
           def func(a):
               %time print 'foo' + a
           %time func(1)
           `
-        const result = parse({code})
+        const result = parse({ code })
         expect(result).toBeDefined()
         expect(result.ast).toBeDefined()
         expect(result.error).toBe(null)
       })
       it('does not flag cell magics as errors', () => {
-        const code =
-          `
+        const code = `
           %%bash
           %%js
           def func(a, b):
             print('foo')
           func()
           `
-        const result = parse({code})
+        const result = parse({ code })
         expect(result).toBeDefined()
         expect(result.ast).toBeDefined()
         expect(result.error).toBe(null)
@@ -81,7 +81,7 @@ c = 3
       expect(ranges).toEqualRanges(expected)
     }
     beforeEach(() => {
-      const result = parse({code})
+      const result = parse({ code })
       ast = result.ast
       expect(result.error).toBe(null)
     })
@@ -161,8 +161,7 @@ c = 3
     describe('with global keyword', () => {
       const expected = '34:0 34:7 mut, 36:20 36:27, 37:4 37:11 mut, 38:6 38:13'
       it('finds references from global keyword', () =>
-        expectRanges(608, expected)
-      )
+        expectRanges(608, expected))
       it('finds references from local overwrite', () => {
         expectRanges(620, expected)
       })

@@ -1,14 +1,14 @@
 'use babel'
 
-import {Range} from 'atom'
+import { Range } from 'atom'
 
 export function addRangeMatchers() {
-  this.addMatchers({toEqualRange, toEqualRanges})
+  this.addMatchers({ toEqualRange, toEqualRanges })
 }
 
 const parseRangeRe = /(\d+):(\d+) (\d+):(\d+)(?: (\w+))?/
 
-const formatRange = ({start, end, type = ''}) =>
+const formatRange = ({ start, end, type = '' }) =>
   `${type}(${start.row}:${start.column} -> ${end.row}:${end.column})`
 
 const formatRanges = ranges => `[${ranges.map(formatRange).join(', ')}]`
@@ -23,7 +23,7 @@ function parseRange(range) {
     }
     const [, r0, c0, r1, c1, type] = match
     const r = new Range([r0, c0].map(toInt), [r1, c1].map(toInt))
-    return Object.assign(r, {type: type})
+    return Object.assign(r, { type: type })
   } else {
     return Range.fromObject(range)
   }
@@ -40,7 +40,7 @@ function parseRanges(ranges) {
 }
 
 function toEqualRange(expected) {
-  const {actual} = this
+  const { actual } = this
   const prefix = this.messagePrefix || ''
   const expectedRange = parseRange(expected)
   if (actual instanceof Range === false) {
@@ -48,36 +48,40 @@ function toEqualRange(expected) {
     return false
   }
   const {
-    start: {row: asr, column: asc},
-    end: {row: aer, column: aec},
+    start: { row: asr, column: asc },
+    end: { row: aer, column: aec },
     type: at,
   } = actual
   const {
-    start: {row: esr, column: esc},
-    end: {row: eer, column: eec},
+    start: { row: esr, column: esc },
+    end: { row: eer, column: eec },
     type: et,
   } = expectedRange
   const tests = [[asr, esr], [asc, esc], [aer, eer], [aec, eec], [at, et]]
   if (tests.every(([a, b]) => a === b)) {
-    this.message = () => `Expected${prefix} ${formatRange(actual)} not to equal `
-      + formatRange(expectedRange)
+    this.message = () =>
+      `Expected${prefix} ${formatRange(actual)} not to equal ` +
+      formatRange(expectedRange)
     return true
   } else {
-    this.message = () => `Expected${prefix} ${formatRange(actual)} to equal `
-      + formatRange(expectedRange)
+    this.message = () =>
+      `Expected${prefix} ${formatRange(actual)} to equal ` +
+      formatRange(expectedRange)
     return false
   }
 }
 
 function toEqualRanges(expectedRanges) {
-  const {actual} = this
+  const { actual } = this
   const expected = parseRanges(expectedRanges)
   if (!Array.isArray(expected)) {
-    this.message = () => `Expected value must be an array (received: ${typeof expected})`
+    this.message = () =>
+      `Expected value must be an array (received: ${typeof expected})`
     return false
   }
   if (!Array.isArray(actual)) {
-    this.message = () => `Actual value must be an array (received: ${typeof expected})`
+    this.message = () =>
+      `Actual value must be an array (received: ${typeof expected})`
     return false
   }
   if (expected.length !== actual.length) {

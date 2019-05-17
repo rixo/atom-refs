@@ -3,7 +3,7 @@
 const getVimMode = (vim, editor) => {
   const state = vim.getEditorState(editor)
   if (state) {
-    const {mode, submode} = state
+    const { mode, submode } = state
     return [mode, submode]
   }
 }
@@ -16,7 +16,7 @@ const setVimMode = (vimService, editor, [mode, submode]) => {
 }
 
 const select = state => e => {
-  const {editor, ranges, vim} = state
+  const { editor, ranges, vim } = state
   if (!editor || !ranges) {
     return
   }
@@ -32,7 +32,7 @@ const select = state => e => {
 select.scope = 'atom-text-editor'
 
 const next = state => e => {
-  const {ranges, editor, locator} = state
+  const { ranges, editor, locator } = state
   if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
@@ -46,7 +46,8 @@ const next = state => e => {
       const bufferPosition = cursor.getBufferPosition()
       const currentStart = currentRange.start
       const deltaRow = bufferPosition.row - currentStart.row
-      const deltaCol = deltaRow === 0 ? bufferPosition.column - currentStart.column : 0
+      const deltaCol =
+        deltaRow === 0 ? bufferPosition.column - currentStart.column : 0
       const nextRow = nextStart.row + deltaRow
       const nextCol = nextStart.column + deltaCol
       cursor.setBufferPosition([nextRow, nextCol])
@@ -58,7 +59,7 @@ const next = state => e => {
 next.scope = 'atom-text-editor'
 
 const previous = state => e => {
-  const {ranges, editor, locator} = state
+  const { ranges, editor, locator } = state
   if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
@@ -72,7 +73,8 @@ const previous = state => e => {
       const bufferPosition = cursor.getBufferPosition()
       const curStart = curRange.start
       const deltaRow = bufferPosition.row - curStart.row
-      const deltaCol = deltaRow === 0 ? bufferPosition.column - curStart.column : 0
+      const deltaCol =
+        deltaRow === 0 ? bufferPosition.column - curStart.column : 0
       const prevRow = toStart.row + deltaRow
       const prevCol = toStart.column + deltaCol
       cursor.setBufferPosition([prevRow, prevCol])
@@ -83,11 +85,11 @@ const previous = state => e => {
 }
 previous.scope = 'atom-text-editor'
 
-const findCurrentIndex = ({ranges, locator}, cursor) => {
+const findCurrentIndex = ({ ranges, locator }, cursor) => {
   const bufferPosition = cursor.getBufferPosition()
   const pos = locator(bufferPosition)
   return ranges.findIndex(
-    ({start, end}) => pos >= locator(start) && pos <= locator(end)
+    ({ start, end }) => pos >= locator(start) && pos <= locator(end)
   )
 }
 

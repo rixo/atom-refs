@@ -44,7 +44,7 @@ const createParser = type => {
 }
 
 function createJsParser() {
-  const {parse} = require('babylon')
+  const { parse } = require('babylon')
   const isBabelParser = false
   // const parsePlugins = [
   //   'estree',
@@ -58,8 +58,8 @@ function createJsParser() {
 
   const ERR_MODULE = `'import' and 'export' may appear only with 'sourceType: "module"'`
   const isModuleError = err =>
-    err instanceof SyntaxError
-    && err.message.substr(0, ERR_MODULE.length) === ERR_MODULE
+    err instanceof SyntaxError &&
+    err.message.substr(0, ERR_MODULE.length) === ERR_MODULE
 
   const defaultSourceType = isBabelParser ? 'unambiguous' : 'script'
 
@@ -83,7 +83,7 @@ function createJsParser() {
         throw err
       }
     }
-    return {ast, error}
+    return { ast, error }
   }
 
   return code => parseAs(code, defaultSourceType)

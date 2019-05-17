@@ -149,11 +149,11 @@ const findBinding = (ast, loc) => {
       }
       const scopeBinding = scope.getBinding(name)
       if (
-        scopeBinding
-        && (scopeBinding.identifier === node
-          || scopeBinding.referencePaths.some(isNode(node))
+        scopeBinding &&
+        (scopeBinding.identifier === node ||
+          scopeBinding.referencePaths.some(isNode(node)) ||
           // || scopeBinding.constantViolations.some(({node: {left: ref}}) => ref === node)
-          || scopeBinding.constantViolations.some(isLeftNode(node)))
+          scopeBinding.constantViolations.some(isLeftNode(node)))
       ) {
         binding = scopeBinding
         path.stop()

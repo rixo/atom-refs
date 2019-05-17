@@ -2,15 +2,15 @@
 
 import Parser from 'tree-sitter'
 import Python from 'tree-sitter-python'
-import {Range} from 'atom'
-import {down} from '../util/traverse'
-import {Debug} from '../../config'
+import { Range } from 'atom'
+import { down } from '../util/traverse'
+import { Debug } from '../../config'
 const debug = Debug('python')
 
 const parser = new Parser()
 parser.setLanguage(Python)
 
-const nodeRange = ({startPosition, endPosition}) =>
+const nodeRange = ({ startPosition, endPosition }) =>
   Range.fromObject([startPosition, endPosition])
 
 function debugSrc() {
@@ -18,7 +18,7 @@ function debugSrc() {
   return code && code.substring(this.startIndex, this.endIndex)
 }
 
-export default ({code}) => {
+export default ({ code }) => {
   // TODO incremental
   const ast = parser.parse(code)
   // TODO remove debug util src
@@ -35,7 +35,7 @@ export default ({code}) => {
     }
   }
   // error
-  const getSrc = ({startIndex: a, endIndex: b}) => code.substring(a, b)
+  const getSrc = ({ startIndex: a, endIndex: b }) => code.substring(a, b)
   let errors = []
   if (ast.rootNode.hasError()) {
     const ignoreRows = []
@@ -45,8 +45,8 @@ export default ({code}) => {
       if (node.type === 'ERROR') {
         const src = getSrc(node).trim()
         const {
-          startPosition: {row: startRow},
-          endPosition: {row: endRow},
+          startPosition: { row: startRow },
+          endPosition: { row: endRow },
         } = node
         if (src[0] === '%') {
           ignoreRows.push([startRow, endRow])

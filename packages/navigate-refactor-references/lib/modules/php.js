@@ -383,9 +383,9 @@ function createFinder() {
       if (name === identName) {
         const identIsCall = identNode[$isCall] || identKind === 'method'
         if (
-          identKind === 'constref'
-          || identKind === 'method'
-          || identKind === 'property'
+          identKind === 'constref' ||
+          identKind === 'method' ||
+          identKind === 'property'
         ) {
           if (kind === 'constref') {
             // ensure left is `$this->` (because we can't guess
@@ -448,10 +448,10 @@ function createFinder() {
     const { kind: identKind, name: identName } = identNode
     debug('Found', identNode)
     if (
-      identName === 'this'
-      || identKind === 'constref'
-      || identKind === 'method'
-      || identKind === 'property'
+      identName === 'this' ||
+      identKind === 'constref' ||
+      identKind === 'method' ||
+      identKind === 'property'
     ) {
       // search references in whole class
       const classNode = inClasses.pop()

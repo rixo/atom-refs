@@ -1,9 +1,9 @@
 'use babel'
 
-import {CompositeDisposable} from 'atom'
-import {createLocator} from './util'
+import { CompositeDisposable } from 'atom'
+import { createLocator } from './util'
 import commands from './commands'
-import {PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE} from './config'
+import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
 import modules from './modules'
 
 const scopes = modules.getScopes()
@@ -31,10 +31,13 @@ export const activate = () => {
   // state.parse = require('./parse').tryParse
 
   const applyBufferChanged = () => {
-    const {editor, module: {parse}} = state
+    const {
+      editor,
+      module: { parse },
+    } = state
     const code = editor.getText()
     debug('onBufferChanged parse')
-    const parsed = parse({code, editor})
+    const parsed = parse({ code, editor })
     state.locator = parsed.locator || createLocator(code)
     debug('onBufferChanged parsed', parsed)
     state.ast = parsed.ast
@@ -50,7 +53,7 @@ export const activate = () => {
 
   const updateCursorPositions = () => {
     cursorMovedTimeout = null
-    const {editor} = state
+    const { editor } = state
     state.cursorBufferPositions = editor.getCursorBufferPositions()
   }
   const applyCursorMoved = () => {
@@ -60,13 +63,13 @@ export const activate = () => {
   let cursorMovedTimeout = null
   const onCursorMoved = cursorChangeThrottle
     ? () => {
-      clearTimeout(cursorMovedTimeout)
-      cursorMovedTimeout = setTimeout(applyCursorMoved, cursorChangeThrottle)
-    }
+        clearTimeout(cursorMovedTimeout)
+        cursorMovedTimeout = setTimeout(applyCursorMoved, cursorChangeThrottle)
+      }
     : applyCursorMoved
 
   const onChangeGrammar = () => {
-    const {editor} = state
+    const { editor } = state
     const grammar = editor.getGrammar()
     const scopeName = grammar.scopeName
     if (scopes.includes(scopeName)) {
@@ -81,7 +84,7 @@ export const activate = () => {
   }
 
   const onActiveTextEditor = editor => {
-    const {disposable} = state
+    const { disposable } = state
     if (disposable) {
       subscriptions.remove(state.disposable)
       disposable.dispose()
@@ -91,9 +94,7 @@ export const activate = () => {
     if (editor) {
       state.disposable = new CompositeDisposable()
       subscriptions.add(state.disposable)
-      state.disposable.add(
-        editor.onDidChangeGrammar(onChangeGrammar)
-      )
+      state.disposable.add(editor.onDidChangeGrammar(onChangeGrammar))
       editor.onDidDestroy(() => {
         if (state.linter) {
           const editorPath = editor.getPath()
@@ -107,7 +108,7 @@ export const activate = () => {
   }
 
   const enable = state => {
-    const {editor, disposable} = state
+    const { editor, disposable } = state
     state.activeDisposable = new CompositeDisposable()
     ;[
       editor.onDidStopChanging(onBufferChanged),
@@ -119,7 +120,7 @@ export const activate = () => {
   }
 
   const disable = state => {
-    const {disposable, activeDisposable} = state
+    const { disposable, activeDisposable } = state
     if (activeDisposable) {
       disposable.remove(activeDisposable)
       activeDisposable.dispose()
@@ -127,20 +128,20 @@ export const activate = () => {
     }
   }
 
-  subscriptions.add(
-    atom.workspace.observeActiveTextEditor(onActiveTextEditor)
-  )
+  subscriptions.add(atom.workspace.observeActiveTextEditor(onActiveTextEditor))
 
   Object.entries(commands).forEach(([name, handler]) => {
     const scope = handler.scope || 'atom-workspace'
-    subscriptions.add(atom.commands.add(scope, {
-      [`${PACKAGE}:${name}`]: handler(state),
-    }))
+    subscriptions.add(
+      atom.commands.add(scope, {
+        [`${PACKAGE}:${name}`]: handler(state),
+      })
+    )
   })
 }
 
 export const deactivate = () => {
-  const {subscriptions} = state
+  const { subscriptions } = state
   clearMarkers(state)
   if (subscriptions) {
     subscriptions.dispose()
@@ -157,12 +158,7 @@ const handleParseError = state => {
 }
 
 const displayParseError = state => {
-  const {
-    editor,
-    linter,
-    parseError,
-    markers,
-  } = state
+  const { editor, linter, parseError, markers } = state
   if (!parseError) {
     return
   }
@@ -178,7 +174,9 @@ const displayParseError = state => {
     if (error.range) {
       return error.range
     } else if (error.loc) {
-      const {loc: {line, column}} = error
+      const {
+        loc: { line, column },
+      } = error
       const row = line - 1
       const range = [[row, column], [row, column + 1]]
       return range
@@ -188,51 +186,61 @@ const displayParseError = state => {
   }
 
   function display(error) {
-    const {message} = error
+    const { message } = error
     if (error instanceof SyntaxError && (error.loc || error.range)) {
       const range = parseErrorRange(error)
       if (linter && editorPath) {
-        linter.setMessages(editorPath, [{
-          severity: 'error',
-          location: {
-            file: editorPath,
-            position: range,
+        linter.setMessages(editorPath, [
+          {
+            severity: 'error',
+            location: {
+              file: editorPath,
+              position: range,
+            },
+            excerpt: message,
+            description: message,
           },
-          excerpt: message,
-          description: message,
-        }])
+        ])
       } else {
         const marker = editor.markBufferRange(range)
-        editor.decorateMarker(marker, {type: 'highlight', class: 'refactor-error'})
-        editor.decorateMarker(marker, {type: 'line-number', class: 'refactor-error'})
+        editor.decorateMarker(marker, {
+          type: 'highlight',
+          class: 'refactor-error',
+        })
+        editor.decorateMarker(marker, {
+          type: 'line-number',
+          class: 'refactor-error',
+        })
         const item = document.createElement('div')
         item.textContent = message
         item.style.background = '#fff'
         item.style.border = '1px solid darkred'
         item.style.color = 'darkred'
-        editor.decorateMarker(marker, {type: 'overlay', item})
+        editor.decorateMarker(marker, { type: 'overlay', item })
         // editor.decorateMarker(marker, {type: 'text', style: {color: 'red'}})
         // TODO message
         markers.push(marker)
       }
     } else {
       if (linter && editorPath) {
-        linter.setMessages(editorPath, [{
-          severity: 'error',
-          location: {
-            file: editorPath,
-            position: [[0, 0], [0, 1]],
+        linter.setMessages(editorPath, [
+          {
+            severity: 'error',
+            location: {
+              file: editorPath,
+              position: [[0, 0], [0, 1]],
+            },
+            excerpt: message,
+            description: message,
           },
-          excerpt: message,
-          description: message,
-        }])
+        ])
       }
     }
   }
 }
 
 const clearMarkers = state => {
-  const {markers} = state
+  const { markers } = state
   if (markers) {
     state.markers.forEach(marker => marker.destroy())
   }
@@ -250,9 +258,7 @@ const updateReferences = state => {
     ast,
     parseError,
     linter,
-    module: {
-      findReferences,
-    },
+    module: { findReferences },
   } = state
   // guard: parse error
   if (parseError) {
@@ -269,15 +275,13 @@ const updateReferences = state => {
   if (locator && ast) {
     const cursorLocations = positions.map(locator)
     cursorLocations.forEach(location => {
-      const {cursorPositions} = state
-      const ranges = findReferences(ast, location, {cursorPositions})
+      const { cursorPositions } = state
+      const ranges = findReferences(ast, location, { cursorPositions })
       state.ranges = ranges
       ranges.forEach(range => {
         const marker = editor.markBufferRange(range)
-        const cls = range.type
-          ? `refactor-${range.type}`
-          : 'refactor-reference'
-        editor.decorateMarker(marker, {type: 'highlight', class: cls})
+        const cls = range.type ? `refactor-${range.type}` : 'refactor-reference'
+        editor.decorateMarker(marker, { type: 'highlight', class: cls })
         markers.push(marker)
       })
     })

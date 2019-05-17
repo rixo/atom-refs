@@ -1,9 +1,9 @@
 'use babel'
 
-import {SKIP, up, down} from '../util/traverse'
+import { SKIP, up, down } from '../util/traverse'
 import assert from 'assert'
-import {Range} from 'atom'
-import {Debug} from '../../config'
+import { Range } from 'atom'
+import { Debug } from '../../config'
 const debug = Debug('python.findReferences')
 
 const CLASS_DEF = 'class_definition'
@@ -18,49 +18,51 @@ const COMMENT = 'comment'
 const isAssign = node => {
   const p1 = node.parent
   const p2 = p1 && p1.parent
-  return p1 && p2
-    && p1.type === 'expression_list'
-    && p2.type === 'assignment'
-    && p2.children.indexOf(p1) === 0
+  return (
+    p1 &&
+    p2 &&
+    p1.type === 'expression_list' &&
+    p2.type === 'assignment' &&
+    p2.children.indexOf(p1) === 0
+  )
 }
 
-const declTypes = [
-  'class_definition',
-  'function_definition',
-]
-const isDecl = node =>
-  declTypes.some(t => node.type === t) || isParamDecl(node)
+const declTypes = ['class_definition', 'function_definition']
+const isDecl = node => declTypes.some(t => node.type === t) || isParamDecl(node)
 
 const isParamDecl = node => {
-  const {type, parent} = node
+  const { type, parent } = node
   if (!parent) {
     return false
   }
-  const {type: ptype} = parent
-  return type === IDENTIFIER && (
-    ptype === PARAMETERS || ptype === DEFAULT_PARAMETER
+  const { type: ptype } = parent
+  return (
+    type === IDENTIFIER && (ptype === PARAMETERS || ptype === DEFAULT_PARAMETER)
   )
 }
 
 const isWrite = node => isAssign(node) || isDecl(node)
 
-const isGlobalAt = (scopeNode, testTargetName) => down(scopeNode, node => {
-  if (isScopeNode(node)) return SKIP
-  if (node.type === 'global_statement') {
-    return down(node, node => {
-      if (isBinding(node) && testTargetName(node)) {
-        return true
-      }
-    }) || SKIP
-  }
-}) || false
+const isGlobalAt = (scopeNode, testTargetName) =>
+  down(scopeNode, node => {
+    if (isScopeNode(node)) return SKIP
+    if (node.type === 'global_statement') {
+      return (
+        down(node, node => {
+          if (isBinding(node) && testTargetName(node)) {
+            return true
+          }
+        }) || SKIP
+      )
+    }
+  }) || false
 
 const isRightSideDefaultParam = node => {
-  const {parent, type} = node
+  const { parent, type } = node
   if (!parent || type !== IDENTIFIER) {
     return false
   }
-  const {type: ptype} = parent
+  const { type: ptype } = parent
   return ptype === DEFAULT_PARAMETER && parent.child(2) === node
 }
 
@@ -86,14 +88,11 @@ const findRootScope = (fromNode, testTargetName) => {
   })
 }
 
-const scopeTypes = [
-  'class_definition',
-  'function_definition',
-]
-const isScopeNode = ({type}) => scopeTypes.some(t => type === t)
+const scopeTypes = ['class_definition', 'function_definition']
+const isScopeNode = ({ type }) => scopeTypes.some(t => type === t)
 
 const isBinding = node => {
-  const {type, parent} = node
+  const { type, parent } = node
   if (type === FUNC_DEF || type == CLASS_DEF) {
     return true
   } else if (type === IDENTIFIER) {
@@ -119,31 +118,34 @@ const isShadowedAt = (scope, testName) => {
 
 // is assigned in this scope, disregarding child scopes?
 const isWrittenAt = (scope, testName) => {
-  return down(scope, node => {
-    if (isBinding(node) && testName(node) && isWrite(node)) {
-      return true
-    } else if (isScopeNode(node)) {
-      return SKIP
-    }
-  }) || false
+  return (
+    down(scope, node => {
+      if (isBinding(node) && testName(node) && isWrite(node)) {
+        return true
+      } else if (isScopeNode(node)) {
+        return SKIP
+      }
+    }) || false
+  )
 }
 
-const findIndentifierAt = (node, loc) => down(node, node => {
-  if (isBinding(node)) {
-    const identifier = getBindingIdentifier(node)
-    if (identifier) {
-      const {startIndex, endIndex} = identifier
-      if (startIndex <= loc && endIndex > loc) {
-        return node
+const findIndentifierAt = (node, loc) =>
+  down(node, node => {
+    if (isBinding(node)) {
+      const identifier = getBindingIdentifier(node)
+      if (identifier) {
+        const { startIndex, endIndex } = identifier
+        if (startIndex <= loc && endIndex > loc) {
+          return node
+        }
       }
     }
-  }
-})
+  })
 
-const noComment = ({type}) => type !== COMMENT
+const noComment = ({ type }) => type !== COMMENT
 
 const getBindingIdentifier = node => {
-  const {type, children} = node
+  const { type, children } = node
   if (type === CLASS_DEF || type === FUNC_DEF) {
     const child1 = children && children.filter(noComment)[1]
     if (!child1) {
@@ -159,11 +161,11 @@ const getBindingIdentifier = node => {
   }
 }
 
-const nodeRange = ({startPosition, endPosition}) =>
+const nodeRange = ({ startPosition, endPosition }) =>
   Range.fromObject([startPosition, endPosition])
 
 const bindingRange = bindingNode => {
-  const {type} = bindingNode
+  const { type } = bindingNode
   if (type === FUNC_DEF || type === CLASS_DEF) {
     const identifier = getBindingIdentifier(bindingNode)
     if (identifier) {
@@ -182,8 +184,8 @@ const getBindingName = (getSrc, node) => {
 }
 
 const formatRange = ({
-  start: {row: r0, column: c0},
-  end: {row: r1, column: c1},
+  start: { row: r0, column: c0 },
+  end: { row: r1, column: c1 },
   type,
 }) => `${r0}:${c0} ${r1}:${c1}${type ? ` ${type}` : ''}`
 
@@ -200,8 +202,8 @@ const visitFunctionRightSideParameters = (scope, testTargetName, pushNode) => {
 
 export default (ast, loc) => {
   // console.log('loc', loc)
-  const {code} = ast
-  const getSrc = ({startIndex: a, endIndex: b}) => code.substring(a, b)
+  const { code } = ast
+  const getSrc = ({ startIndex: a, endIndex: b }) => code.substring(a, b)
   const cursorNode = findIndentifierAt(ast.rootNode, loc)
   if (!cursorNode) {
     return []
@@ -231,7 +233,8 @@ export default (ast, loc) => {
   const testTargetName = node => getBindingName(getSrc, node) === targetName
   // the scope that will be traversed to find references: this is the first
   // parent scope where an identifier with the same name is written
-  const rootScopeNode = findRootScope(cursorNode, testTargetName) || ast.rootNode
+  const rootScopeNode =
+    findRootScope(cursorNode, testTargetName) || ast.rootNode
   if (debug.enabled) {
     debug('rootScopeNode', rootScopeNode.src)
   }
