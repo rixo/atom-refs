@@ -21,6 +21,7 @@ const state = {
   parseError: null,
   ranges: [],
   markers: [],
+  linter: null,
 }
 
 export const activate = () => {
@@ -187,7 +188,7 @@ const displayParseError = state => {
 
   function display(error) {
     const { message } = error
-    if (error instanceof SyntaxError && (error.loc || error.range)) {
+    if (error.loc || error.range) {
       const range = parseErrorRange(error)
       if (linter && editorPath) {
         linter.setMessages(editorPath, [
