@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@babel/parser": "^7.4.4",
-    "atom-reference-escope": "file:///home/eric/github/escope",
+    "atom-refs-escope": "file:../escope",
     "babel-traverse": "^6.26.0",
     "babel-types": "^6.26.0",
     "babylon": "^6.18.0",

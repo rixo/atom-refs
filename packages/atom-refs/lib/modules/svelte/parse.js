@@ -3,9 +3,10 @@
 import { Range } from 'atom'
 const escope = require('atom-references-escope')
 
-import { compile, parse } from './svelte'
-console.log(compile)
-debugger
+/* eslint-disable-plugin import */
+// nothing cut it: using import kills eslint :(
+// import { compile, parse } from './svelte'
+const { compile, parse } = require('./svelte')
 
 const PARSE_WITH_COMPILE = false
 
@@ -47,7 +48,7 @@ const analyzeScopes = ({ module: mod, instance, html }) => {
   return {
     // module: mod && escope.analyze(mod.content, escopeOptions),
     // instance: instance && escope.analyze(instance.content, escopeOptions),
-    program: escope.analyze(program, escopeOptions),
+    program: analyze(program, escopeOptions),
   }
 }
 

@@ -4,7 +4,9 @@ import { uniq, flatten, compose } from 'underscore-plus'
 
 import { debug } from '../../config'
 
-import { walk } from './svelte'
+// using import kills eslint :(
+// import { walk } from './svelte'
+const { walk } = require('./svelte')
 
 const isGlobal = Symbol('isGlobal')
 
