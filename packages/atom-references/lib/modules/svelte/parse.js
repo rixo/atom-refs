@@ -2,7 +2,7 @@
 
 import { compile, parse } from 'svelte/compiler'
 import { Range } from 'atom'
-const escope = require('escope')
+const escope = require('atom-references-escope')
 
 const PARSE_WITH_COMPILE = false
 
