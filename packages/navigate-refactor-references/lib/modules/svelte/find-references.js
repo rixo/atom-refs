@@ -31,7 +31,8 @@ const findVariables = (parseResult, loc) => {
         }
         // identifier
         if (type === 'Identifier' && start <= loc) {
-          ;[...uppers, currentScopes].reverse().some(scopes => {
+          const ancestors = [...uppers, currentScopes]
+          ancestors.reverse().some(scopes => {
             const variables = scopes
               .map(scope => {
                 const { references } = scope
