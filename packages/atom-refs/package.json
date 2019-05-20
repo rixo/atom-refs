@@ -1,5 +1,5 @@
 {
-  "name": "atom-references",
+  "name": "atom-refs",
   "main": "./lib/main",
   "version": "0.1.0",
   "author": {
