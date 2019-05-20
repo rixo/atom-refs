@@ -64,6 +64,10 @@ class Importer extends esrecurse.Visitor {
                     null,
                     null
                     ));
+          // RIXO: support import identifier references
+          this.referencer.currentScope().__referencing(
+            id, Reference.WRITE, id, null, false, true
+          );
         });
     }
 
@@ -180,6 +184,14 @@ export default class Referencer extends esrecurse.Visitor {
                         null,
                         null
                     ));
+            // RIXO: support function declaration reference
+            if (node.id) {
+              this.visitPattern(node.id, (pattern, info) => {
+                this.currentScope().__referencing(
+                  node.id, Reference.WRITE, node, null, !info.topLevel, true
+                );
+              });
+            }
         }
 
         // FunctionExpression with name creates its special scope;
@@ -257,6 +269,12 @@ export default class Referencer extends esrecurse.Visitor {
                         node.id,
                         node
                     ));
+          // RIXO: support class declaration reference
+          this.visitPattern(node.id, (pattern, info) => {
+            this.currentScope().upper.__referencing(
+              node.id, Reference.WRITE, node, null, !info.topLevel, true
+            );
+          });
         }
         this.visit(node.body);
 
@@ -334,6 +352,10 @@ export default class Referencer extends esrecurse.Visitor {
             }
             if (init) {
                 this.currentScope().__referencing(pattern, Reference.WRITE, init, null, !info.topLevel, true);
+            }
+            // RIXO:
+            else {
+              this.currentScope().__referencing(pattern, Reference.READ, null, null, !info.topLevel, true);
             }
         });
     }

@@ -1,5 +1,5 @@
 {
-  "name": "escope",
+  "name": "atom-references-escope",
   "description": "ECMAScript scope analyzer",
   "homepage": "http://github.com/estools/escope",
   "main": "lib/index.js",
@@ -10,13 +10,6 @@
   "engines": {
     "node": ">=4.0"
   },
-  "maintainers": [
-    {
-      "name": "Yusuke Suzuki",
-      "email": "utatane.tea@gmail.com",
-      "web": "http://github.com/Constellation"
-    }
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/estools/escope.git"
