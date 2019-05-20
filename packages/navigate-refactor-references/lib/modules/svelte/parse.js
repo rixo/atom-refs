@@ -1,9 +1,10 @@
 'use babel'
 
-// import { parse } from 'svelte/compiler'
-import { compile } from 'svelte/compiler'
+import { compile, parse } from 'svelte/compiler'
 import { Range } from 'atom'
 const escope = require('escope')
+
+const PARSE_WITH_COMPILE = false
 
 const getScriptFragment = script => {
   if (!script) return null
@@ -22,7 +23,7 @@ const getScriptFragment = script => {
   }
 }
 
-const analyzeScopes = ({ module: mod, instance, html, css }) => {
+const analyzeScopes = ({ module: mod, instance, html }) => {
   const escopeOptions = { ecmaVersion: 10, sourceType: 'module' }
 
   const body = [...[mod, instance].map(getScriptFragment), html]
@@ -47,24 +48,25 @@ const analyzeScopes = ({ module: mod, instance, html, css }) => {
   }
 }
 
-export default ({ code, editor, findReferencesService }) => {
-  // if (!findReferencesService) {
-  //   return
-  // }
-  // if (!findReferencesService.isEditorSupported(editor)) {
-  //   return
-  // }
-  // return findReferencesService.findReferences(editor).then(result => {
-  //   debugger
-  // })
+const parseWithCompile = code => {
+  const ast = compile(code, {
+    generate: false,
+  })
+  ast.scopeManager = analyzeScopes(ast.ast)
+  return { ast }
+}
 
+const parseWithParse = code => {
+  const ast = parse(code)
+  const scopeManager = analyzeScopes(ast)
+  return { ast: { ast, scopeManager } }
+}
+
+const parser = PARSE_WITH_COMPILE ? parseWithCompile : parseWithParse
+
+export default ({ code }) => {
   try {
-    // const ast = parse(code)
-    const ast = compile(code, {
-      generate: false,
-    })
-    ast.scopeManager = analyzeScopes(ast.ast)
-    return { ast }
+    return parser(code)
   } catch (error) {
     const { start, end } = error
     if (start) {
