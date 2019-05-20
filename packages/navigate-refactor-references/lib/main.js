@@ -28,14 +28,15 @@ export const activate = () => {
   const subscriptions = new CompositeDisposable()
   state.subscriptions = subscriptions
 
-  // lazy require of (big import) babylon
-  // state.parse = require('./parse').tryParse
+  let bufferChangedTimeout = null
+  let changing = false
 
   const applyBufferChanged = () => {
     const {
       editor,
       module: { parse },
     } = state
+    changing = false
     const code = editor.getText()
     debug('onBufferChanged parse')
     const parsed = parse({ code, editor })
@@ -46,7 +47,10 @@ export const activate = () => {
     updateReferences(state)
   }
 
-  let bufferChangedTimeout = null
+  const onBufferChange = () => {
+    changing = true
+  }
+
   const onBufferChanged = () => {
     clearTimeout(bufferChangedTimeout)
     bufferChangedTimeout = setTimeout(applyBufferChanged, 100)
@@ -59,7 +63,11 @@ export const activate = () => {
   }
   const applyCursorMoved = () => {
     updateCursorPositions()
-    updateReferences(state)
+    // skip updating references if buffer has changed since locator
+    // may be out of sync -- update will happen when changes settle
+    if (!changing) {
+      updateReferences(state)
+    }
   }
   let cursorMovedTimeout = null
   const onCursorMoved = cursorChangeThrottle
@@ -112,6 +120,7 @@ export const activate = () => {
     const { editor, disposable } = state
     state.activeDisposable = new CompositeDisposable()
     ;[
+      editor.onDidChange(onBufferChange),
       editor.onDidStopChanging(onBufferChanged),
       editor.onDidChangeCursorPosition(onCursorMoved),
     ].forEach(d => state.activeDisposable.add(d))
@@ -276,8 +285,8 @@ const updateReferences = state => {
   if (locator && ast) {
     const cursorLocations = positions.map(locator)
     cursorLocations.forEach(location => {
-      const { cursorPositions } = state
-      const ranges = findReferences(ast, location, { cursorPositions })
+      const { locator } = state
+      const ranges = findReferences(ast, location, { locator })
       state.ranges = ranges
       ranges.forEach(range => {
         const marker = editor.markBufferRange(range)

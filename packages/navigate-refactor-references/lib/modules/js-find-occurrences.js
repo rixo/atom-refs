@@ -10,8 +10,8 @@ export const findReferences = (ast, loc) => {
     binding = findBinding(ast, loc)
   } catch (err) {
     if (err.message === "Cannot read property 'file' of undefined") {
-      // ignore this one...seems like a bug in babylon when there are duplicated
-      // const variables
+      // ignore this one...seems like a bug in babylon when there are
+      // duplicated const variables
     } else {
       throw err
     }
@@ -60,7 +60,7 @@ const gatherRanges = binding => {
     })
   )
 
-  // global doesn't has constantViolations
+  // global doesn't have constantViolations
   if (binding.constantViolations) {
     ranges = ranges.concat(
       binding.constantViolations.map(p => {

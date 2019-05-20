@@ -1,6 +1,11 @@
-'use babel'
+/** @babel */
 
-const modules = [require('./js'), require('./php'), require('./python')]
+const modules = [
+  require('./js'),
+  require('./svelte'),
+  require('./php'),
+  require('./python'),
+]
 
 const scopeModule = mapModulesByScope(modules)
 
@@ -19,6 +24,9 @@ export default {
 function mapModulesByScope(modules) {
   const map = {}
   modules.forEach(module => {
+    if (!module.scopes) {
+      throw new Error('Invalid module: missing scopes')
+    }
     module.scopes.forEach(scope => {
       map[scope] = module
     })

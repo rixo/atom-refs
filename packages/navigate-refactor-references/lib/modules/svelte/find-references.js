@@ -1,37 +1,19 @@
 'use babel'
 
-// import traverse from 'babel-traverse'
 import { walk } from 'svelte/compiler'
-// import { Range } from 'atom'
-// const walk = require('acorn-walk')
-import { uniq, flatten, compose, identity } from 'underscore-plus'
+import { uniq, flatten, compose } from 'underscore-plus'
 
 import { debug } from '../../config'
 
-const getContent = o => o.content
-
 const findVariables = (parseResult, loc) => {
-  // const fragments = Object.entries({
-  //   module: getContent,
-  //   instance:  getContent,
-  //   // html: identity
-  // })
-  //   .map(([fragmentType, getAstRoot]) => {
-  //     let ast = parseResult.ast[fragmentType]
-  //     if (!ast) return null
-  //     ast = getAstRoot(ast)
-  //     const scopeManager = parseResult.scopeManager[fragmentType]
-  //     return { fragmentType, ast, scopeManager }
-  //   })
-  //   .filter(Boolean)
-
   const foundVariables = {}
   {
     const scopeManager = parseResult.scopeManager.program
     const ast = parseResult.scopeManager.program.globalScope.block
     const fragmentType = 'program'
 
-    let currentScopes = scopeManager.acquireAll(ast)
+    const rootScope = scopeManager.acquireAll(ast)
+    let currentScopes = rootScope
     let found = false
     const uppers = []
     walk(ast, {
@@ -49,15 +31,21 @@ const findVariables = (parseResult, loc) => {
         }
         // identifier
         if (type === 'Identifier' && start <= loc) {
-          const variables = currentScopes
-            .map(({ defs, references }) => {
-              const reference = references.find(ref => ref.identifier === node)
-              if (reference) {
-                return reference.resolved
-              }
-            })
-            .filter(Boolean)
-          foundVariables[fragmentType] = uniq(variables)
+          ;[...uppers, currentScopes].reverse().some(scopes => {
+            const variables = scopes
+              .map(scope => {
+                const { references } = scope
+                const reference = references.find(ref => ref.identifier === node)
+                if (reference) {
+                  return reference.resolved
+                }
+              })
+              .filter(Boolean)
+            if (variables.length > 0) {
+              foundVariables[fragmentType] = uniq(variables)
+              return true
+            }
+          })
           found = true
           this.skip()
         }
@@ -73,49 +61,6 @@ const findVariables = (parseResult, loc) => {
       },
     })
   }
-  // fragments.forEach(({ fragmentType, ast, scopeManager }) => {
-  //   let currentScopes = scopeManager.acquireAll(ast)
-  //   let found = false
-  //   const uppers = []
-  //   walk(ast, {
-  //     enter(node) {
-  //       const { start, end, type } = node
-  //       if (found || end <= loc) {
-  //         this.skip()
-  //         return
-  //       }
-  //       // scope
-  //       const nodeScopes = scopeManager.acquireAll(node)
-  //       if (nodeScopes) {
-  //         uppers.push(currentScopes)
-  //         currentScopes = nodeScopes
-  //       }
-  //       // identifier
-  //       if (type === 'Identifier' && start <= loc) {
-  //         const variables = currentScopes
-  //           .map(({ references }) => {
-  //             const reference = references.find(ref => ref.identifier === node)
-  //             if (reference) {
-  //               return reference.resolved
-  //             }
-  //           })
-  //           .filter(Boolean)
-  //         foundVariables[fragmentType] = uniq(variables)
-  //         found = true
-  //         this.skip()
-  //       }
-  //     },
-  //     leave(node) {
-  //       const nodeScopes = scopeManager.acquireAll(node)
-  //       if (nodeScopes) {
-  //         if (nodeScopes !== currentScopes) {
-  //           throw new Error('Illegal state')
-  //         }
-  //         currentScopes = uppers.pop()
-  //       }
-  //     },
-  //   })
-  // })
 
   const binding = compose(
     uniq,
@@ -142,7 +87,6 @@ const gatherRanges = (references, locator) => {
 
 export default (ast, loc, { locator }) => {
   const variables = findVariables(ast, loc)
-  // console.log(loc, locator.getPoint(loc), variables)
   // case: not found
   if (!variables) {
     debug('Not found')
@@ -154,7 +98,6 @@ export default (ast, loc, { locator }) => {
     const ranges = gatherRanges(references, locator)
     return result.concat(ranges)
   }, [])
-  // console.log(ranges)
   debug('Found', ranges)
   return ranges
 }

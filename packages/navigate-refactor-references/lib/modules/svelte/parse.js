@@ -41,8 +41,8 @@ const analyzeScopes = ({ module: mod, instance, html, css }) => {
   }
 
   return {
-    module: mod && escope.analyze(mod.content, escopeOptions),
-    instance: instance && escope.analyze(instance.content, escopeOptions),
+    // module: mod && escope.analyze(mod.content, escopeOptions),
+    // instance: instance && escope.analyze(instance.content, escopeOptions),
     program: escope.analyze(program, escopeOptions),
   }
 }
