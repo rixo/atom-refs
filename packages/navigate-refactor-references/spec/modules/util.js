@@ -114,7 +114,7 @@ class CodeSpec {
     const { marks } = this
     const sortedMarks = marks.sort(({ loc: a }, { loc: b }) => a - b)
     let last = 0
-    const result = []
+    const result = [this.name + '\n\n']
     let pastCursor = cursorLoc == null
     sortedMarks.forEach(({ loc, char }) => {
       if (!pastCursor && loc >= cursorLoc) {
@@ -228,13 +228,15 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
     }
   }, true)
 
-  remainingActuals.forEach(({ start, end }) => {
-    actualSpec.mark('✚', locator.getLoc(start))
-    actualSpec.mark('✚', locator.getLoc(end))
-  })
+  if (remainingActuals.length > 0) {
+    pass = false
+    remainingActuals.forEach(({ start, end }) => {
+      actualSpec.mark('✚', locator.getLoc(start))
+      actualSpec.mark('✚', locator.getLoc(end))
+    })
+  }
 
   this.message = () =>
-    '\n\n' +
     formatRow(expectedSpec.format(code, cursorLoc), actualSpec.format(code)) +
     '\n'
 

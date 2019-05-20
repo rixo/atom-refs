@@ -5,6 +5,8 @@ import { uniq, flatten, compose } from 'underscore-plus'
 
 import { debug } from '../../config'
 
+const isGlobal = Symbol('isGlobal')
+
 const findVariables = (parseResult, loc) => {
   const foundVariables = {}
   const scopeManager = parseResult.scopeManager.program
@@ -37,7 +39,11 @@ const findVariables = (parseResult, loc) => {
               const { references } = scope
               const reference = references.find(ref => ref.identifier === node)
               if (reference) {
-                return reference.resolved
+                if (reference.resolve) {
+                  return reference.resolved
+                } else {
+                  return { [isGlobal]: true, reference }
+                }
               }
             })
             .filter(Boolean)
@@ -70,7 +76,7 @@ const findVariables = (parseResult, loc) => {
   return binding
 }
 
-const gatherRanges = (references, locator) => {
+const gatherRanges = ({ references }, locator) => {
   return references.map(ref => {
     const { start, end } = ref.identifier
     const range = locator.getRange(start, end)
@@ -93,8 +99,9 @@ export default (ast, loc, { locator }) => {
   }
   // case: found
   const ranges = variables.reduce((result, variable) => {
-    const { references } = variable
-    const ranges = gatherRanges(references, locator)
+    const ranges = variable[isGlobal]
+      ? gatherGlobalRanges(variable, locator)
+      : gatherRanges(variable, locator)
     return result.concat(ranges)
   }, [])
   debug('Found', ranges)
