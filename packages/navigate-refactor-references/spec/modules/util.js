@@ -249,41 +249,41 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
 }
 
 export const FindsRefsTest = ({ parse, findReferences }) => {
-  const describeRefs = (title, fn = describe) => (parts, ...descs) => {
-    let code = dedent(parts.join(''))
-    const assertions = []
-    let expected = []
-    {
-      let pullLeft = 0
-      code = code.replace(/_([^_]*|[^_]*)_/g, (match, spec, originalOffset) => {
-        const desc = descs[assertions.length]
-          ? `finds ${descs[assertions.length]}`
-          : ''
-        const offset = originalOffset - pullLeft
-        const nameOffset = spec.indexOf('|')
-        if (~nameOffset) {
-          assertions.push({
-            loc: offset + spec.indexOf('|'),
-            desc,
-          })
-        }
-        const name = spec.replace('|', '')
-        const from = offset
-        const to = offset + name.length
-        expected.push([from, to])
-        pullLeft += match.length - name.length
-        return name
-      })
-    }
-    const locator = createLocator(code)
-    expected = expected.map(([from, to]) => locator.getRange(from, to))
-    // -- Run test --
-    // parse
-    const result = parse({ code })
-    const ast = result.ast
-    const error = result.error
-    // assertions
-    fn(title, () => {
+  const describeRefs = (title, dc = describe) => (parts, ...descs) => {
+    dc(title, () => {
+      let code = dedent(parts.join(''))
+      const assertions = []
+      let expected = []
+      {
+        let pullLeft = 0
+        code = code.replace(/_([^_]*|[^_]*)_/g, (match, spec, originalOffset) => {
+          const desc = descs[assertions.length]
+            ? `finds ${descs[assertions.length]}`
+            : ''
+          const offset = originalOffset - pullLeft
+          const nameOffset = spec.indexOf('|')
+          if (~nameOffset) {
+            assertions.push({
+              loc: offset + spec.indexOf('|'),
+              desc,
+            })
+          }
+          const name = spec.replace('|', '')
+          const from = offset
+          const to = offset + name.length
+          expected.push([from, to])
+          pullLeft += match.length - name.length
+          return name
+        })
+      }
+      const locator = createLocator(code)
+      expected = expected.map(([from, to]) => locator.getRange(from, to))
+      // -- Run test --
+      // parse
+      const result = parse({ code })
+      const ast = result.ast
+      const error = result.error
+      // assertions
       assertions.forEach(({ loc, desc }) => {
         it(desc, () => {
           if (error) {

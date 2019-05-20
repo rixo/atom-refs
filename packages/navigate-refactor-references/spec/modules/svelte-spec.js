@@ -84,18 +84,6 @@ describe('modules/svelte', () => {
     const addRangeMatchers = createAddRangeMatchers({ human: false })
     beforeEach(addRangeMatchers)
 
-    describeRefs('const in instance')`
-      <script>
-        const _fo|o_ = 'foo' ${'from declaration'}
-        const bar = _|foo_ + 'bar' ${'from reference'}
-      </script>
-      <script context="module">
-        console.log(_foo_) ${'from module context'}
-      </script>
-      {_fo|o_} ${'from HTML'}
-      <div>{_fo|o_}</div> ${'from HTML element'}
-    `
-
     describeRefs('let in instance')`
       <script>
         let _fo|o_ = 'foo' ${'from declaration'}
@@ -120,17 +108,52 @@ describe('modules/svelte', () => {
       <div>{_fo|o_}</div> ${'from HTML element'}
     `
 
-    describeRefs('const in module')`
-      <script context="module">
-        const _fo|o_ = 'foo' ${'from declaration'}
-        const bar = _|foo_ + 'bar' ${'from reference'}
-      </script>
-      <script>
-        console.log(_foo_) ${'from module context'}
-      </script>
-      {_fo|o_} ${'from HTML'}
-      <div>{_fo|o_}</div> ${'from HTML element'}
-    `
+    describe('const', () => {
+      describeRefs('in instance')`
+        <script>
+          const _fo|o_ = 'foo' ${'from declaration'}
+          const bar = _|foo_ + 'bar' ${'from reference'}
+        </script>
+        <script context="module">
+          console.log(_foo_) ${'from module context'}
+        </script>
+        {_fo|o_} ${'from HTML'}
+        <div>{_fo|o_}</div> ${'from HTML element'}
+      `
+      describeRefs('in module')`
+        <script context="module">
+          const _fo|o_ = 'foo' ${'from declaration'}
+          const bar = _|foo_ + 'bar' ${'from reference'}
+        </script>
+        <script>
+          console.log(_foo_) ${'from module context'}
+        </script>
+        {_fo|o_} ${'from HTML'}
+        <div>{_fo|o_}</div> ${'from HTML element'}
+      `
+      describe('shadowing', () => {
+        describeRefs('outer')`
+          <script>
+            const _|a_ = 1 ${'from declaration'}
+            console.log(_|a_) ${'from usage'}
+            {
+              const a = 1
+              console.log(a)
+            }
+          </script>
+        `
+        describeRefs('inner')`
+          <script>
+            const a = 1
+            console.log(a)
+            {
+              const _|a_ = 1 ${'from declaration'}
+              console.log(_|a_) ${'from usage'}
+            }
+          </script>
+        `
+      })
+    })
 
     describeRefs('let in module')`
       <script context="module">
@@ -208,6 +231,7 @@ describe('modules/svelte', () => {
           }
         }
         (_xx|x_) ${'from statement'}
+        console.log(_xx|x_) ${'from args'}
       </script>
       <script context="module">
         _xx|x_() ${'from module'}
@@ -222,17 +246,23 @@ describe('modules/svelte', () => {
         class Bar extends _|Foo_ {} ${'from extends MyClass'}
         const a = _Fo|o_ ${'from reference'}
         const foo = new _F|oo_ ${'from instanciation'}
+        console.log(_Fo|o_) ${'from args'}
+        {
+          _Foo_() ${'from block scope'}
+          (new _Fo|o_) ${'from block scope with new'}
+        }
       </script>
       <pre>
         Foo: {_F|oo_ + Bar} ${'from HTML expression'}
       </pre>
     `
 
-    describeRefs('class refs')`
+    describeRefs('class refs in block scope')`
       <script>
-        class _Foo_ {}
+        const foo = 'foo'
         {
-          class Bar extends _F|oo_ {} ${'from deeper extends'}
+          class _fo|o_ {} ${'class declared in block scope'}
+          (new _|foo_) ${'with new'}
         }
       </script>
     `
@@ -282,15 +312,30 @@ describe('modules/svelte', () => {
       <div>{_j|q_}</div> ${'from HTML'}
     `
 
-    xdescribeRefs('globals')`
-      <div>{_con|sole_}</div>
+    describeRefs('globals')`
+      <div>{_con|sole_}</div> ${'from HTML'}
       <script>
-        _con|sole_${'from instance'}
-          .log(_|console_) ${'from args'}
+        _con|sole_${'from instance'}.log(_|console_) ${'from args'}
+        {
+          _consol|e_${'from block scope'}
+            .log(null, _console_) ${'from args'}
+        }
       </script>
       <script context="module">
         _con|sole_${'from module'}
           .log(_|console_) ${'from args in module'}
+      </script>
+    `
+
+    describeRefs('multiple globals')`
+      <div>{_console_}</div>
+      <script>
+        _con|sole_ ${'not other globals from instance'}
+        _console_.log(window)
+      </script>
+      <script context="module">
+        _con|sole_${'not other globals from module'}
+        window.log(_console_)
       </script>
     `
   })

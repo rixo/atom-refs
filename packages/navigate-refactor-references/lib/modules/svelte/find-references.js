@@ -7,6 +7,9 @@ import { debug } from '../../config'
 
 const isGlobal = Symbol('isGlobal')
 
+const get = (node, path) =>
+  path.split('.').reduce((cur, step) => cur && cur[step], node)
+
 const findVariables = (parseResult, loc) => {
   const foundVariables = {}
   const scopeManager = parseResult.scopeManager.program
@@ -14,6 +17,8 @@ const findVariables = (parseResult, loc) => {
   const fragmentType = 'program'
 
   const rootScope = scopeManager.acquireAll(ast)
+  const globalScopes = rootScope.filter(({ type }) => type === 'global')
+  const globalScope = globalScopes[0] // heuristic (as they say in escope code)
   let currentScopes = rootScope
   let found = false
   const uppers = []
@@ -39,10 +44,23 @@ const findVariables = (parseResult, loc) => {
               const { references } = scope
               const reference = references.find(ref => ref.identifier === node)
               if (reference) {
-                if (reference.resolve) {
+                if (reference.resolved) {
                   return reference.resolved
                 } else {
-                  return { [isGlobal]: true, reference }
+                  // prolly global (hopefully)
+                  //
+                  // through: variables that are not resolved in this scope
+                  // -> hopefully it contains all global refs...
+                  //
+                  const through = get(globalScope, 'through')
+                  if (!through) {
+                    // eslint-disable-next-line no-console
+                    console.warn('Failed to find valid global scope')
+                  }
+                  const references = through.filter(
+                    ({ identifier: id }) => id.name === node.name
+                  )
+                  return { [isGlobal]: true, references }
                 }
               }
             })
@@ -76,8 +94,8 @@ const findVariables = (parseResult, loc) => {
   return binding
 }
 
-const gatherRanges = ({ references }, locator) => {
-  return references.map(ref => {
+const gatherRanges = (references, locator) =>
+  references.map(ref => {
     const { start, end } = ref.identifier
     const range = locator.getRange(start, end)
     if (ref.isWrite()) {
@@ -88,7 +106,6 @@ const gatherRanges = ({ references }, locator) => {
     }
     return range
   })
-}
 
 export default (ast, loc, { locator }) => {
   const variables = findVariables(ast, loc)
@@ -99,9 +116,8 @@ export default (ast, loc, { locator }) => {
   }
   // case: found
   const ranges = variables.reduce((result, variable) => {
-    const ranges = variable[isGlobal]
-      ? gatherGlobalRanges(variable, locator)
-      : gatherRanges(variable, locator)
+    const { references } = variable
+    const ranges = gatherRanges(references, locator)
     return result.concat(ranges)
   }, [])
   debug('Found', ranges)
