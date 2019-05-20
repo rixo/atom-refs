@@ -21,7 +21,7 @@
     "language-babel:grammar-used",
     "language-php:grammar-used",
     "language-python:grammar-used",
-    "language-svelte:grammar-used"
+    "ide-svelte:grammar-used"
   ],
   "consumedServices": {
     "vim-mode-plus": {
