@@ -7,61 +7,59 @@ import { debug } from '../../config'
 
 const findVariables = (parseResult, loc) => {
   const foundVariables = {}
-  {
-    const scopeManager = parseResult.scopeManager.program
-    const ast = parseResult.scopeManager.program.globalScope.block
-    const fragmentType = 'program'
+  const scopeManager = parseResult.scopeManager.program
+  const ast = parseResult.scopeManager.program.globalScope.block
+  const fragmentType = 'program'
 
-    const rootScope = scopeManager.acquireAll(ast)
-    let currentScopes = rootScope
-    let found = false
-    const uppers = []
-    walk(ast, {
-      enter(node) {
-        const { start, end, type } = node
-        if (found || end <= loc) {
-          this.skip()
-          return
-        }
-        // scope
-        const nodeScopes = scopeManager.acquireAll(node)
-        if (nodeScopes) {
-          uppers.push(currentScopes)
-          currentScopes = nodeScopes
-        }
-        // identifier
-        if (type === 'Identifier' && start <= loc) {
-          const ancestors = [...uppers, currentScopes]
-          ancestors.reverse().some(scopes => {
-            const variables = scopes
-              .map(scope => {
-                const { references } = scope
-                const reference = references.find(ref => ref.identifier === node)
-                if (reference) {
-                  return reference.resolved
-                }
-              })
-              .filter(Boolean)
-            if (variables.length > 0) {
-              foundVariables[fragmentType] = uniq(variables)
-              return true
-            }
-          })
-          found = true
-          this.skip()
-        }
-      },
-      leave(node) {
-        const nodeScopes = scopeManager.acquireAll(node)
-        if (nodeScopes) {
-          if (nodeScopes !== currentScopes) {
-            throw new Error('Illegal state')
+  const rootScope = scopeManager.acquireAll(ast)
+  let currentScopes = rootScope
+  let found = false
+  const uppers = []
+  walk(ast, {
+    enter(node) {
+      const { start, end, type } = node
+      if (found || end <= loc) {
+        this.skip()
+        return
+      }
+      // scope
+      const nodeScopes = scopeManager.acquireAll(node)
+      if (nodeScopes) {
+        uppers.push(currentScopes)
+        currentScopes = nodeScopes
+      }
+      // identifier
+      if (type === 'Identifier' && start <= loc) {
+        const ancestors = [...uppers, currentScopes]
+        ancestors.reverse().some(scopes => {
+          const variables = scopes
+            .map(scope => {
+              const { references } = scope
+              const reference = references.find(ref => ref.identifier === node)
+              if (reference) {
+                return reference.resolved
+              }
+            })
+            .filter(Boolean)
+          if (variables.length > 0) {
+            foundVariables[fragmentType] = uniq(variables)
+            return true
           }
-          currentScopes = uppers.pop()
+        })
+        found = true
+        this.skip()
+      }
+    },
+    leave(node) {
+      const nodeScopes = scopeManager.acquireAll(node)
+      if (nodeScopes) {
+        if (nodeScopes !== currentScopes) {
+          throw new Error('Illegal state')
         }
-      },
-    })
-  }
+        currentScopes = uppers.pop()
+      }
+    },
+  })
 
   const binding = compose(
     uniq,
