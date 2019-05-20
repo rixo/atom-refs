@@ -1,9 +1,10 @@
 'use babel'
 
-import { walk } from 'svelte/compiler'
 import { uniq, flatten, compose } from 'underscore-plus'
 
 import { debug } from '../../config'
+
+import { walk } from './svelte'
 
 const isGlobal = Symbol('isGlobal')
 

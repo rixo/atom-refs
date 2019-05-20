@@ -1,8 +1,11 @@
 'use babel'
 
-import { compile, parse } from 'svelte/compiler'
 import { Range } from 'atom'
 const escope = require('atom-references-escope')
+
+import { compile, parse } from './svelte'
+console.log(compile)
+debugger
 
 const PARSE_WITH_COMPILE = false
 
