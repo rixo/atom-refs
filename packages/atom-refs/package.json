@@ -1,7 +1,7 @@
 {
   "name": "atom-refs",
   "main": "./lib/main",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "author": {
     "name": "rixo",
     "email": "rixo@rixo.fr"
@@ -40,11 +40,11 @@
   },
   "dependencies": {
     "@babel/parser": "^7.4.4",
+    "atom-reference-escope": "file:///home/eric/github/escope",
     "babel-traverse": "^6.26.0",
     "babel-types": "^6.26.0",
     "babylon": "^6.18.0",
     "debug": "^3.1.0",
-    "atom-reference-escope": "file:///home/eric/github/escope",
     "php-parser": "^3.0.0-alpha2",
     "svelte": "^3.4.1",
     "tree-sitter": "^0.12.8",
