@@ -144,7 +144,10 @@ const formatRow = (...strings) => {
   const widths = colLines.map(lines =>
     Math.max(...lines.map(line => line.length))
   )
-  const totalLines = colLines.reduce((max, {length}) => Math.max(length, max), 0)
+  const totalLines = colLines.reduce(
+    (max, { length }) => Math.max(length, max),
+    0
+  )
   const rowLines = Array.from(Array(totalLines)).map((x, i) => {
     return colLines.reduce((result, lines, col) => {
       const l = lines[i] || ''
@@ -237,11 +240,14 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
   }
 
   this.message = () =>
-    formatRow(expectedSpec.format(code, cursorLoc), actualSpec.format(code)) +
-    '\n'
+    formatRow(
+      expectedSpec.format(code, cursorLoc),
+      actualSpec.format(code, cursorLoc)
+    ) + '\n'
 
   return pass
 }
+
 export const FindsRefsTest = ({ parse, findReferences }) => {
   const describeRefs = (title, fn = describe) => (parts, ...descs) => {
     let code = dedent(parts.join(''))
