@@ -1,14 +1,14 @@
 {
-  "name": "navigate-refactor-references",
+  "name": "atom-references",
   "main": "./lib/main",
   "version": "0.1.0",
   "author": {
-    "name": "Rixo",
+    "name": "rixo",
     "email": "rixo@rixo.fr"
   },
   "description": "Navigate and refactor references",
   "keywords": [],
-  "repository": "https://github.com/rixo/atom-navigate-refactor-references",
+  "repository": "https://github.com/rixo/atom-references",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
