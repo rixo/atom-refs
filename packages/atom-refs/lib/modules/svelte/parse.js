@@ -1,7 +1,7 @@
 'use babel'
 
 import { Range } from 'atom'
-const escope = require('atom-references-escope')
+import { analyze } from 'atom-refs-escope'
 
 /* eslint-disable-plugin import */
 // nothing cut it: using import kills eslint :(
