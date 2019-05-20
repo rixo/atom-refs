@@ -11,8 +11,7 @@ export const createLocator = text => {
     lineLocs.push(nl.lastIndex)
   }
 
-  const getLoc = ({ column: col, row, line }) =>
-    lineLocs[or(row, line)] + col
+  const getLoc = ({ column: col, row, line }) => lineLocs[or(row, line)] + col
 
   const getPoint = loc => {
     if (loc > text.length || loc < 0) {
