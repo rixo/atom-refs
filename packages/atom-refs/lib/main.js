@@ -61,6 +61,8 @@ export const activate = () => {
       module: { parse },
     } = state
     setChanging(false)
+    // guard: no editor -- this can happen when all tabs are closed at once
+    if (!editor) return
     const code = editor.getText()
     debug('onBufferChanged parse')
     const parsed = parse({ code, editor })
