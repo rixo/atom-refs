@@ -29,14 +29,38 @@ export const activate = () => {
   state.subscriptions = subscriptions
 
   let bufferChangedTimeout = null
+  // changing: the buffer has been modified, and not reparsed yet, so our
+  // state is not valid for findReferences -- we must wait until state is
+  // flushed by onDidStopChanging, or watch dog timeout
   let changing = false
+  // Apparently, when a TextEditor is activated, there is a string of
+  // change event with no corresponding onDidStopChanging call, leaving
+  // us in a broken state of having changing flag set to true. So if we
+  // get no news in a while, we'll force a state refresh after a security
+  // delay
+  let bufferChangeWatchDogTimeout = null
+  const bufferChangeWatchDogDelay = 50
+
+  const setChanging = newChanging => {
+    changing = newChanging
+    if (bufferChangeWatchDogTimeout !== null) {
+      clearTimeout(bufferChangeWatchDogTimeout)
+      bufferChangeWatchDogTimeout = null
+    }
+    if (changing) {
+      bufferChangeWatchDogTimeout = setTimeout(
+        applyBufferChanged,
+        bufferChangeWatchDogDelay
+      )
+    }
+  }
 
   const applyBufferChanged = () => {
     const {
       editor,
       module: { parse },
     } = state
-    changing = false
+    setChanging(false)
     const code = editor.getText()
     debug('onBufferChanged parse')
     const parsed = parse({ code, editor })
@@ -48,7 +72,7 @@ export const activate = () => {
   }
 
   const onBufferChange = () => {
-    changing = true
+    setChanging(true)
   }
 
   const onBufferChanged = () => {
@@ -99,6 +123,7 @@ export const activate = () => {
       disposable.dispose()
       debug('editorDisposable disposed')
     }
+    setChanging(false) // new editor is "not changing" on open
     state.editor = editor
     if (editor) {
       state.disposable = new CompositeDisposable()
