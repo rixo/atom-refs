@@ -110,7 +110,7 @@ const gatherRanges = (references, locator) =>
     return range
   })
 
-export default (ast, loc, { locator }) => {
+const findReferences = (ast, loc, { locator }) => {
   const variables = findVariables(ast, loc)
   // case: not found
   if (!variables) {
@@ -126,3 +126,5 @@ export default (ast, loc, { locator }) => {
   debug('Found', ranges)
   return ranges
 }
+
+export default findReferences
