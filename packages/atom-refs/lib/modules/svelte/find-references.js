@@ -53,7 +53,7 @@ const findVariables = (parseResult, loc) => {
       }
       // references
       const ancestors = [...uppers, currentScopes]
-      ancestors.reverse().some(scopes => {
+      const findVariables = scopes => {
         const variables = scopes
           .map(scope => {
             const { references } = scope
@@ -86,7 +86,8 @@ const findVariables = (parseResult, loc) => {
           foundVariables[fragmentType] = uniq(variables)
           return true
         }
-      })
+      }
+      ancestors.reverse().some(findVariables)
       found = true
       this.skip()
     },
