@@ -7,7 +7,7 @@ module.exports = ({ legacyTestRunner, ...args }) => {
       font-family: monospace;
     }
     body .spec-reporter-container {
-      position: static;
+      //position: static;
     }
   `
   document.head.appendChild(style)
