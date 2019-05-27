@@ -39,43 +39,56 @@ const findVariables = (parseResult, loc) => {
         currentScopes = nodeScopes
       }
       // identifier
-      if (type === 'Identifier' && start <= loc) {
-        const ancestors = [...uppers, currentScopes]
-        ancestors.reverse().some(scopes => {
-          const variables = scopes
-            .map(scope => {
-              const { references } = scope
-              const reference = references.find(ref => ref.identifier === node)
-              if (reference) {
-                if (reference.resolved) {
-                  return reference.resolved
-                } else {
-                  // prolly global (hopefully)
-                  //
-                  // through: variables that are not resolved in this scope
-                  // -> hopefully it contains all global refs...
-                  //
-                  const through = get(globalScope, 'through')
-                  if (!through) {
-                    // eslint-disable-next-line no-console
-                    console.warn('Failed to find valid global scope')
-                  }
-                  const references = through.filter(
-                    ({ identifier: id }) => id.name === node.name
-                  )
-                  return { [isGlobal]: true, references }
-                }
-              }
-            })
-            .filter(Boolean)
-          if (variables.length > 0) {
-            foundVariables[fragmentType] = uniq(variables)
-            return true
-          }
-        })
-        found = true
-        this.skip()
+      if (start > loc) {
+        return
       }
+      let identifier
+      if (type === 'Identifier') {
+        identifier = node
+      } else if (type === 'IfBlock' || type === 'EachBlock') {
+        identifier = node.expression
+      }
+      if (!identifier) {
+        return
+      }
+      // references
+      const ancestors = [...uppers, currentScopes]
+      ancestors.reverse().some(scopes => {
+        const variables = scopes
+          .map(scope => {
+            const { references } = scope
+            const reference = references.find(
+              ref => ref.identifier === identifier
+            )
+            if (reference) {
+              if (reference.resolved) {
+                return reference.resolved
+              } else {
+                // prolly global (hopefully)
+                //
+                // through: variables that are not resolved in this scope
+                // -> hopefully it contains all global refs...
+                //
+                const through = get(globalScope, 'through')
+                if (!through) {
+                  // eslint-disable-next-line no-console
+                  console.warn('Failed to find valid global scope')
+                }
+                const references = through.filter(
+                  ({ identifier: id }) => id.name === identifier.name
+                )
+                return { [isGlobal]: true, references }
+              }
+            }
+          })
+          .filter(Boolean)
+        if (variables.length > 0) {
+          foundVariables[fragmentType] = uniq(variables)
+          return true
+        }
+      })
+      found = true
+      this.skip()
     },
     leave(node) {
       const nodeScopes = scopeManager.acquireAll(node)
