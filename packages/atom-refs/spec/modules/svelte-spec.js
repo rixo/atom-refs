@@ -338,5 +338,61 @@ describe('modules/svelte', () => {
         window.log(_console_)
       </script>
     `
+
+    describeRefs('markup if block')`
+      <script>
+        let _f|oo_ ${'from instance'}
+      </script>
+      <script context="module">
+        console.log(_|foo_) ${'from module'}
+      </script>
+      {#if _fo|o_} ${'from if block condition'}
+        {_fo|o_} ${'from if block body'}
+      {/if}
+      {_f|oo_} ${'from mustache'}
+    `
+
+    describeRefs('markup each block')`
+      <script>
+        let _f|oo_ ${'from instance'}
+      </script>
+      <script context="module">
+        console.log(_|foo_) ${'from module'}
+      </script>
+      {#each _fo|o_ as bar} ${'from each block clause'}
+        {_fo|o_} ${'from each block body'}
+      {/each}
+      {_f|oo_} ${'from mustache'}
+    `
+
+    describeRefs('inline components')`
+      <script>
+        import _F|oo_ from './Foo' ${'from import'}
+        console.log(_F|oo_) ${'from instance'}
+      </script>
+      <script context="module">
+        console.log(_|Foo_) ${'from module'}
+      </script>
+      <_Fo|o_> ${'from tag'}
+        Foo
+      </_F|oo_> ${'from closing tag'}
+      <_Fo|o_ bar="bar"> ${'from tag with attributes'}
+        Foo
+      </_F|oo_     > ${'from closing tag with extra spaces'}
+      <_F|oo_ /> ${'from self closing'}
+      <_Fo|o_ {bar} /> ${'from self closing tag with attribute'}
+      <_F|oo_      /> ${'from self closing tag with extra spacing'}
+      {#if _F|oo_} ${'from if block condition'}
+        <_Fo|o_> ${'from tag in if block'}
+          Foo
+        </_F|oo_> ${'from closing tag in if block'}
+      {/if}
+      {#each _Fo|o_ as bar} ${'from each block clause'}
+        <_Fo|o_> ${'from tag in each block'}
+          Foo
+        </_F|oo_> ${'from closing tag in each block'}
+      {/each}
+      {_F|oo_} ${'from mustache'}
+    `
   })
 })

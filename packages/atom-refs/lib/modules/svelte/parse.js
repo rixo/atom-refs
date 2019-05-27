@@ -6,9 +6,9 @@ import { analyze } from 'atom-refs-escope'
 /* eslint-disable-plugin import */
 // nothing cut it: using import kills eslint :(
 // import { compile, parse } from './svelte'
-const { compile, parse } = require('./svelte')
+const { compile, parse, walk } = require('./svelte')
 
-const PARSE_WITH_COMPILE = false
+const PARSE_WITH_COMPILE = true
 
 const getScriptFragment = script => {
   if (!script) return null
@@ -27,7 +27,44 @@ const getScriptFragment = script => {
   }
 }
 
-const analyzeScopes = ({ module: mod, instance, html }) => {
+const addInlineComponentIdentifiers = (body, code) => {
+  body.forEach(ast => {
+    walk(ast, {
+      enter(node) {
+        const { type } = node
+        if (type === 'InlineComponent') {
+          addInlineComponentNodeIdentifiers(node, code)
+        }
+      },
+    })
+  })
+}
+
+const addInlineComponentNodeIdentifiers = (node, code) => {
+  const { start, name } = node
+  const nodeCode = code.substring(node.start, node.end)
+  node.id = {
+    type: 'Identifier',
+    name,
+    start: start + 1,
+    end: start + name.length + 1,
+  }
+  // guard: self closing tag
+  if (nodeCode.substr(-2) === '/>') {
+    return
+  }
+  {
+    const idStart = start + nodeCode.lastIndexOf('</') + 2
+    node.children.push({
+      type: 'Identifier',
+      name,
+      start: idStart,
+      end: idStart + name.length,
+    })
+  }
+}
+
+const analyzeScopes = (code, { module: mod, instance, html }) => {
   const escopeOptions = { ecmaVersion: 10, sourceType: 'module' }
 
   const body = [...[mod, instance].map(getScriptFragment), html]
@@ -38,6 +75,9 @@ const analyzeScopes = ({ module: mod, instance, html }) => {
     // ]
     .filter(Boolean)
     .sort(({ start: left }, { start: right }) => left - right)
+
+  // add support for component refs in templates (e.g. <Foo />)
+  addInlineComponentIdentifiers(body, code)
 
   const program = {
     type: 'Program',
@@ -56,13 +96,13 @@ const parseWithCompile = code => {
   const ast = compile(code, {
     generate: false,
   })
-  ast.scopeManager = analyzeScopes(ast.ast)
+  ast.scopeManager = analyzeScopes(code, ast.ast)
   return { ast }
 }
 
 const parseWithParse = code => {
   const ast = parse(code)
-  const scopeManager = analyzeScopes(ast)
+  const scopeManager = analyzeScopes(code, ast)
   return { ast: { ast, scopeManager } }
 }
 
