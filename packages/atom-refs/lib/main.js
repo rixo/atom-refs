@@ -39,7 +39,7 @@ export const activate = () => {
   // get no news in a while, we'll force a state refresh after a security
   // delay
   let bufferChangeWatchDogTimeout = null
-  const bufferChangeWatchDogDelay = 50
+  const bufferChangeWatchDogDelay = 500
 
   const setChanging = newChanging => {
     changing = newChanging
@@ -48,10 +48,10 @@ export const activate = () => {
       bufferChangeWatchDogTimeout = null
     }
     if (changing) {
-      bufferChangeWatchDogTimeout = setTimeout(
-        applyBufferChanged,
-        bufferChangeWatchDogDelay
-      )
+      bufferChangeWatchDogTimeout = setTimeout(() => {
+        if (!changing) return
+        applyBufferChanged()
+      }, bufferChangeWatchDogDelay)
     }
   }
 
@@ -79,7 +79,9 @@ export const activate = () => {
 
   const onBufferChanged = () => {
     clearTimeout(bufferChangedTimeout)
-    bufferChangedTimeout = setTimeout(applyBufferChanged, 100)
+    bufferChangedTimeout = setTimeout(() => {
+      applyBufferChanged()
+    }, 200)
   }
 
   const updateCursorPositions = () => {
