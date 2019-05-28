@@ -256,25 +256,28 @@ export const FindsRefsTest = ({ parse, findReferences }) => {
       let expected = []
       {
         let pullLeft = 0
-        code = code.replace(/_([^_]*|[^_]*)_/g, (match, spec, originalOffset) => {
-          const desc = descs[assertions.length]
-            ? `finds ${descs[assertions.length]}`
-            : ''
-          const offset = originalOffset - pullLeft
-          const nameOffset = spec.indexOf('|')
-          if (~nameOffset) {
-            assertions.push({
-              loc: offset + spec.indexOf('|'),
-              desc,
-            })
+        code = code.replace(
+          /_([^_]*|[^_]*)_/g,
+          (match, spec, originalOffset) => {
+            const desc = descs[assertions.length]
+              ? `finds ${descs[assertions.length]}`
+              : ''
+            const offset = originalOffset - pullLeft
+            const nameOffset = spec.indexOf('|')
+            if (~nameOffset) {
+              assertions.push({
+                loc: offset + spec.indexOf('|'),
+                desc,
+              })
+            }
+            const name = spec.replace('|', '')
+            const from = offset
+            const to = offset + name.length
+            expected.push([from, to])
+            pullLeft += match.length - name.length
+            return name
           }
-          const name = spec.replace('|', '')
-          const from = offset
-          const to = offset + name.length
-          expected.push([from, to])
-          pullLeft += match.length - name.length
-          return name
-        })
+        )
       }
       const locator = createLocator(code)
       expected = expected.map(([from, to]) => locator.getRange(from, to))

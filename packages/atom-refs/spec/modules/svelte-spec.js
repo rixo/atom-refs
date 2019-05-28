@@ -394,5 +394,31 @@ describe('modules/svelte', () => {
       {/each}
       {_F|oo_} ${'from mustache'}
     `
+
+    describeRefs('each block context vars')`
+      <script>
+        let items = [{}, {}, {}]
+      </script>
+      {#each items as _i|tem_} ${'from block context'}
+        <pre>{_i|tem_}</pre> ${'from block body'}
+        <pre>{_i|tem_.name}</pre> ${'from block body when referenced'}
+        {#if _ite|m_} ${'from nested if condition'}
+          <p>{_it|em_}</p> ${'from nested if condition body'}
+        {/if}
+      {/each}
+    `
+
+    describeRefs('each block destructured context vars')`
+      <script>
+        let items = [{}, {}, {}]
+      </script>
+      {#each items as {_i|tem_}} ${'from block context'}
+        <pre>{_i|tem_}</pre> ${'from block body'}
+        <pre>{_i|tem_.name}</pre> ${'from block body when referenced'}
+        {#if _i|tem_}  ${'from nest if condition'}
+          <p>{_it|em_}</p> ${'from nested if condition body'}
+        {/if}
+      {/each}
+    `
   })
 })

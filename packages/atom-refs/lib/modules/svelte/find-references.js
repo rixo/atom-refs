@@ -25,7 +25,7 @@ const findVariables = (parseResult, loc) => {
   let currentScopes = rootScope
   let found = false
   const uppers = []
-  walk(ast, {
+  const visitor = {
     enter(node) {
       const { start, end, type } = node
       if (found || end <= loc) {
@@ -43,10 +43,22 @@ const findVariables = (parseResult, loc) => {
         return
       }
       let identifier
-      if (type === 'Identifier') {
-        identifier = node
-      } else if (type === 'IfBlock' || type === 'EachBlock') {
-        identifier = node.expression
+      // We need to manually descend into each/if blocks because of this line, that effectively
+      // blacklists all props except `else`:
+      //   https://github.com/sveltejs/svelte/blob/master/src/compile/Component.ts#L38
+      switch (type) {
+        case 'Identifier':
+          identifier = node
+          break
+        case 'EachBlock':
+          if (visitNode(node.context, node)) {
+            break
+          }
+        case 'IfBlock':
+          if (visitNode(node.expression, node)) {
+            break
+          }
+          break
       }
       if (!identifier) {
         return
@@ -100,7 +112,22 @@ const findVariables = (parseResult, loc) => {
         currentScopes = uppers.pop()
       }
     },
-  })
+  }
+  const noop = () => {}
+  const noopScope = { skip: noop }
+  const visitNode = (node, parent) => {
+    if (node) {
+      if (node.type === 'Identifier') {
+        // don't let "sub" visits end because they're called out of order...
+        visitor.enter.call(noopScope, node, parent)
+        visitor.leave.call(noopScope, node, parent)
+      } else {
+        walk(node, visitor)
+      }
+    }
+    return found
+  }
+  walk(ast, visitor)
 
   const binding = compose(
     uniq,
