@@ -23,6 +23,13 @@
     "language-python:grammar-used",
     "ide-svelte:grammar-used"
   ],
+  "providedServices": {
+    "hyperclick": {
+      "versions": {
+        "0.1.0": "getHyperclickProvider"
+      }
+    }
+  },
   "consumedServices": {
     "vim-mode-plus": {
       "versions": {

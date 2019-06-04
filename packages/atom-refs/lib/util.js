@@ -30,7 +30,9 @@ export const createLocator = text => {
     return new Range(getPoint(start), getPoint(end))
   }
 
-  return Object.assign(getLoc, { getLoc, getPoint, getRange })
+  // locator(...) DEPRECATED use getPos
+  // getLoc: DEPRECATED use getPos
+  return Object.assign(getLoc, { getLoc, getPos: getLoc, getPoint, getRange })
 }
 
 export const locToRange = ({ start, end }) =>

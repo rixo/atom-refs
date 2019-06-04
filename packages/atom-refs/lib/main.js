@@ -5,6 +5,7 @@ import { createLocator } from './util'
 import commands from './commands'
 import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
 import modules from './modules'
+import makeHyperclickProvider from './hyperclick/make-hyperclick-provider'
 
 const scopes = modules.getScopes()
 
@@ -286,6 +287,16 @@ const clearMarkers = state => {
   state.markers = []
 }
 
+const getDisplayType = type => {
+  switch (type) {
+    case 'namimp':
+    case 'defimp':
+      return 'decl'
+    default:
+      return type
+  }
+}
+
 const updateReferences = state => {
   // remove existing markers
   clearMarkers(state)
@@ -319,7 +330,9 @@ const updateReferences = state => {
       state.ranges = ranges
       ranges.forEach(range => {
         const marker = editor.markBufferRange(range)
-        const cls = range.type ? `refactor-${range.type}` : 'refactor-reference'
+        const cls = range.type
+          ? `refactor-${getDisplayType(range.type)}`
+          : 'refactor-reference'
         editor.decorateMarker(marker, { type: 'highlight', class: cls })
         markers.push(marker)
       })
@@ -338,3 +351,5 @@ export const consumeIndie = registerIndie => {
   state.subscriptions.add(linter)
   state.linter = linter
 }
+
+export const getHyperclickProvider = makeHyperclickProvider(state)
