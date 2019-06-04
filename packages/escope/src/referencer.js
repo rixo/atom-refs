@@ -66,7 +66,7 @@ class Importer extends esrecurse.Visitor {
                     ));
           // RIXO: support import identifier references
           this.referencer.currentScope().__referencing(
-            id, Reference.WRITE, id, null, false, true
+            id, Reference.WRITE, specifier, null, false, true
           );
         });
     }

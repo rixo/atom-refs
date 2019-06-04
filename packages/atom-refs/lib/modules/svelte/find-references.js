@@ -139,18 +139,34 @@ const findVariables = (parseResult, loc) => {
   return binding
 }
 
-const gatherRanges = (references, locator) =>
-  references.map(ref => {
+const resolveRangeType = ref => {
+  if (ref.writeExpr) {
+    const writeType = ref.writeExpr.type
+    if (writeType === 'ImportDefaultSpecifier') {
+      return 'defimp'
+    }
+    if (writeType === 'ImportSpecifier') {
+      return 'namimp'
+    }
+  }
+  if (ref.resolved && ref.resolved.identifiers.includes(ref.identifier)) {
+    return 'decl'
+  } else if (ref.isWrite()) {
+    return 'mut'
+  } else {
+    return 'ref'
+  }
+}
+
+const gatherRanges = (variable, locator) => {
+  const { references } = variable
+  return references.map(ref => {
     const { start, end } = ref.identifier
     const range = locator.getRange(start, end)
-    if (ref.isWrite()) {
-      // TODO decl
-      ref.type = 'mut'
-    } else {
-      ref.type = 'ref'
-    }
+    range.type = resolveRangeType(ref)
     return range
   })
+}
 
 const findReferences = (ast, loc, { locator }) => {
   const variables = findVariables(ast, loc)
@@ -161,8 +177,7 @@ const findReferences = (ast, loc, { locator }) => {
   }
   // case: found
   const ranges = variables.reduce((result, variable) => {
-    const { references } = variable
-    const ranges = gatherRanges(references, locator)
+    const ranges = gatherRanges(variable, locator)
     return result.concat(ranges)
   }, [])
   debug('Found', ranges)

@@ -212,18 +212,27 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
   const actualSpec = new CodeSpec('Actual')
   const remainingActuals = [...actual]
   let pass = true
-  expected.forEach(expectedRange => {
+  expected.forEach(expectedItem => {
+    const expectedRange = expectedItem.range ? expectedItem.range : expectedItem
+    const expectedType = expectedItem.range ? expectedItem.type : null
+    const typeDesc = (expectedType && `${expectedType}:`) || ''
     const { start, end } = expectedRange
-    expectedSpec.mark('_', locator.getLoc(start))
+    expectedSpec.mark(`_${typeDesc}`, locator.getLoc(start))
     expectedSpec.mark('_', locator.getLoc(end))
     const actIndex = remainingActuals.findIndex(
       expectedRange.isEqual.bind(expectedRange)
     )
     if (~actIndex) {
       const [act] = remainingActuals.splice(actIndex, 1)
-      const { start: s, end: e } = act
-      actualSpec.mark('_', locator.getLoc(s))
-      actualSpec.mark('_', locator.getLoc(e))
+      const { start: s, end: e, type } = act
+      if (expectedType && expectedType !== type) {
+        pass = false
+        actualSpec.mark(`_❗${type}:`, locator.getLoc(s))
+        actualSpec.mark('_', locator.getLoc(e))
+      } else {
+        actualSpec.mark('_', locator.getLoc(s))
+        actualSpec.mark('_', locator.getLoc(e))
+      }
     } else {
       pass = false
       actualSpec.mark('✘', locator.getLoc(start))
@@ -265,9 +274,8 @@ export const FindsRefsTest = ({ parse, findReferences }) => {
           // /_([^_]*|[^_]*)_/g,
           regex,
           (match, spec, originalOffset) => {
-            const desc = descs[assertions.length]
-              ? `finds ${descs[assertions.length]}`
-              : String(i++)
+            const descSpec = descs[assertions.length]
+            const desc = descSpec ? `finds ${descSpec}` : String(i++)
             const offset = originalOffset - pullLeft
             const nameOffset = spec.indexOf(cursor)
             if (~nameOffset) {
@@ -279,14 +287,20 @@ export const FindsRefsTest = ({ parse, findReferences }) => {
             const name = spec.replace(cursor, '')
             const from = offset
             const to = offset + name.length
-            expected.push([from, to])
+            const typeMatch =
+              descSpec && /^(ref|mut|decl|defimp|namimp):/.exec(descSpec)
+            const type = typeMatch && typeMatch[1]
+            expected.push([from, to, type])
             pullLeft += match.length - name.length
             return name
           }
         )
       }
       const locator = createLocator(code)
-      expected = expected.map(([from, to]) => locator.getRange(from, to))
+      expected = expected.map(([from, to, type]) => ({
+        range: locator.getRange(from, to),
+        type,
+      }))
       // -- Run test --
       // parse
       const result = parse({ code })
