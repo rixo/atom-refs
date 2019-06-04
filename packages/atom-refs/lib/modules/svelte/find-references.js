@@ -22,7 +22,8 @@ const findVariables = (parseResult, loc) => {
   const rootScope = scopeManager.acquireAll(ast)
   const globalScopes = rootScope.filter(({ type }) => type === 'global')
   const globalScope = globalScopes[0] // heuristic (as they say in escope code)
-  let currentScopes = rootScope
+
+  let currentScopes = []
   let found = false
   const uppers = []
   const visitor = {
@@ -54,11 +55,11 @@ const findVariables = (parseResult, loc) => {
           if (visitNode(node.context, node)) {
             break
           }
+        // fall through
         case 'IfBlock':
           if (visitNode(node.expression, node)) {
             break
           }
-          break
       }
       if (!identifier) {
         return

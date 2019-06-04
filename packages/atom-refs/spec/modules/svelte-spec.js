@@ -408,16 +408,70 @@ describe('modules/svelte', () => {
       {/each}
     `
 
-    describeRefs('each block destructured context vars')`
+    describeRefs('each block destructured context vars', '§')`
       <script>
         let items = [{}, {}, {}]
       </script>
-      {#each items as {_i|tem_}} ${'from block context'}
-        <pre>{_i|tem_}</pre> ${'from block body'}
-        <pre>{_i|tem_.name}</pre> ${'from block body when referenced'}
-        {#if _i|tem_}  ${'from nest if condition'}
-          <p>{_it|em_}</p> ${'from nested if condition body'}
+      {#each items as {_i§tem_}} ${'from block context'}
+        <pre>{_i§tem_}</pre> ${'from block body'}
+        <pre>{_i§tem_.name}</pre> ${'from block body when referenced'}
+        {#if _i§tem_}  ${'from nest if condition'}
+          <p>{_it§em_}</p> ${'from nested if condition body'}
         {/if}
+      {/each}
+    `
+
+    describe('transition', () => {
+      describeRefs('transition directive', '§')`
+        <div transition:_fa§de_>fade</div>
+        <div transition:_fa§de_={params}>fade</div>
+        <div transition:_fa§de_|local>fade</div>
+        <div transition:_fa§de_|local={params}>fade</div>
+        <script>
+          import { _fa§de_ } from 'svelte/transition'
+        </script>
+      `
+
+      describeRefs('in directive', '§')`
+        <script>
+          import { _fl§y_ } from 'svelte/transition'
+        </script>
+        <div in:_fl§y_>fade</div>
+        <div in:_fl§y_={params}>fade</div>
+        <div in:_fl§y_|local>fade</div>
+        <div in:_fl§y_|local={params}>fade</div>
+      `
+
+      describeRefs('out directive', '§')`
+        <script>
+          import { _fl§y_, fade } from 'svelte/transition'
+        </script>
+        <div out:_fl§y_>fade</div>
+        <div out:_fl§y_={params}>fade</div>
+        <div out:_fl§y_|local>fade</div>
+        <div out:_fl§y_|local={params}>fade</div>
+      `
+
+      describeRefs('transition directive with variable from module', '§')`
+        <script context="module">
+          const _fad$e_ = {}
+        </script>
+        <div transition:_fa§de_>fade</div>
+        <div transition:_fa§de_={params}>fade</div>
+        <div transition:_fa§de_|local>fade</div>
+        <div transition:_fa§de_|local={params}>fade</div>
+      `
+    })
+
+    describeRefs('animate directive', '§')`
+      <script context="module">
+        import { _f§lip_ } from 'svelte/animate'
+      </script>
+      <script>
+        const list = []
+      </script>
+      {#each list as item (item)}
+        <div animate:_fli§p_>{item}</div>
       {/each}
     `
   })

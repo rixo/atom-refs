@@ -27,16 +27,54 @@ const getScriptFragment = script => {
   }
 }
 
-const addInlineComponentIdentifiers = (body, code) => {
+const visit = (ast, visitor) =>
+  walk(ast, {
+    enter(node, parent) {
+      const handler = visitor[node.type]
+      if (handler) {
+        handler.call(visitor, node, parent)
+      }
+    },
+  })
+
+class ExtraIdentifiersVisitor {
+  constructor(code) {
+    this.code = code
+  }
+
+  visitTransition(node) {
+    const {
+      name,
+      name: { length: l },
+    } = node
+    const nodeCode = this.code.substring(node.start, node.end)
+    const start = node.start + nodeCode.indexOf(':') + 1
+    node.id = {
+      type: 'Identifier',
+      name,
+      start,
+      end: start + l,
+    }
+  }
+
+  InlineComponent(node) {
+    addInlineComponentNodeIdentifiers(node, this.code)
+  }
+
+  Animation(node) {
+    this.visitTransition(node)
+  }
+
+  Transition(node) {
+    this.visitTransition(node)
+  }
+}
+
+// adds Identifier for nodes that needs to be parsed by escope, but which
+// svelte compiler does not add one by itself
+const addExtraIdentifiers = (body, code) => {
   body.forEach(ast => {
-    walk(ast, {
-      enter(node) {
-        const { type } = node
-        if (type === 'InlineComponent') {
-          addInlineComponentNodeIdentifiers(node, code)
-        }
-      },
-    })
+    visit(ast, new ExtraIdentifiersVisitor(code))
   })
 }
 
@@ -77,7 +115,7 @@ const analyzeScopes = (code, { module: mod, instance, html }) => {
     .sort(({ start: left }, { start: right }) => left - right)
 
   // add support for component refs in templates (e.g. <Foo />)
-  addInlineComponentIdentifiers(body, code)
+  addExtraIdentifiers(body, code)
 
   const program = {
     type: 'Program',
