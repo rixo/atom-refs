@@ -4,7 +4,7 @@ import traverse from 'babel-traverse'
 import { locToRange } from '../util'
 import { debug } from '../config'
 
-export const findReferences = (ast, loc) => {
+export function findReferences(ast, loc) {
   let binding
   try {
     binding = findBinding(ast, loc)
@@ -27,7 +27,7 @@ export const findReferences = (ast, loc) => {
   return gatherRanges(binding)
 }
 
-const gatherRanges = binding => {
+function gatherRanges(binding) {
   let ranges
   let refPaths
   if (binding.isGlobal) {
@@ -90,7 +90,7 @@ const gatherRanges = binding => {
   return ranges
 }
 
-const getDeclRange = binding => {
+function getDeclRange(binding) {
   const { path, identifier } = binding
   let range
   if (path.isImportSpecifier()) {
@@ -118,7 +118,7 @@ const getDeclRange = binding => {
   return range
 }
 
-const findBinding = (ast, loc) => {
+function findBinding(ast, loc) {
   if (!ast) {
     throw new Error('AST required')
   }
@@ -183,7 +183,7 @@ const findBinding = (ast, loc) => {
   return binding
 }
 
-const gatherGlobalBindings = (ast, { node: { name: searchName } }) => {
+function gatherGlobalBindings(ast, { node: { name: searchName } }) {
   const paths = []
   const visitor = {
     Identifier(path) {
