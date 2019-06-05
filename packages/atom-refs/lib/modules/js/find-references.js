@@ -1,11 +1,12 @@
 'use babel'
 
 import traverse from 'babel-traverse'
-import { locToRange } from '../util'
-import { debug } from '../config'
-import byFirstRange from './util/byFirstRange'
 
-export function findReferences(ast, loc) {
+import byFirstRange from '../util/byFirstRange'
+import { debug } from '../../config'
+import { locToRange } from '../../util'
+
+export default function findReferences(ast, loc) {
   let binding
   try {
     binding = findBinding(ast, loc)

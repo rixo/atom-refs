@@ -3,7 +3,7 @@
 import Debug from 'debug'
 
 import { findReferences as findSvelteReferences } from '../modules/svelte'
-import { findReferences as findJsReferences } from '../modules/js-find-occurrences'
+import { findReferences as findJsReferences } from '../modules/js/find-references'
 
 import buildSuggestion from './build-suggestion'
 
