@@ -106,7 +106,7 @@ function findBinding(ast, loc) {
   const isNode = node => ({ node: ref }) => ref === node
   const isLeftNode = node => ({ node: { left: ref } }) => ref === node
   // https://github.com/thejameskyle/babel-handbook/blob/master/translations/en/plugin-handbook.md
-  const onIdentififer = path => {
+  const visitIdentififer = path => {
     if (touches(path)) {
       const {
         scope,
@@ -143,8 +143,8 @@ function findBinding(ast, loc) {
     //     debugger
     //   }
     // },
-    JSXIdentifier: onIdentififer,
-    Identifier: onIdentififer,
+    JSXIdentifier: visitIdentififer,
+    Identifier: visitIdentififer,
   }
   let binding
   traverse(ast, visitor)
