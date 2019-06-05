@@ -1,3 +1,5 @@
+'use babel'
+
 export default (
   { start: { column: ca, row: ra } },
   { start: { column: cb, row: rb } }
