@@ -2,11 +2,9 @@
 
 import { traverse } from '../../modules/svelte/parse'
 import { parse, findReferences } from '../../modules/svelte'
-import { requireJSH } from '../util'
+import parseJumpContext from '../parse-jump-context'
 
 import createLang from './create-lang'
-
-const { parseAst: jshParseInfo } = requireJSH('/lib/core/parse-code')
 
 const scopes = ['source.svelte']
 
@@ -25,12 +23,12 @@ const parseInfo = svelteAst => {
     svelte,
   }
   if (ast.module) {
-    const info = jshParseInfo(ast.module.content, traverse)
+    const info = parseJumpContext(ast.module.content, traverse)
     infos.module = info
     Object.assign(svelte, info)
   }
   if (ast.instance) {
-    const info = jshParseInfo(ast.instance.content, traverse)
+    const info = parseJumpContext(ast.instance.content, traverse)
     infos.instance = info
     Object.assign(svelte, {
       // imports in instance are not real imports (they're public props)

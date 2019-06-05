@@ -1,9 +1,7 @@
 'use babel'
 
 import { parse, findReferences } from '../../modules/js'
-import { requireJSH } from '../util'
-
-const { parseAst: parseInfo } = requireJSH('/lib/core/parse-code')
+import parseInfo from '../parse-jump-context'
 
 import createLang from './create-lang.js'
 
