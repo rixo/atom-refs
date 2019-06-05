@@ -10,7 +10,7 @@ export default function buildJump(
   point
 ) {
   if (parseError) {
-    throw new Error('Previous parse error: ' + parseError)
+    throw new Error('Previous parse error: ' + parseError.stack || parseError)
     // atom.notifications.addWarning('atom-refs', { detail: String(parseError) })
     // return
   }
@@ -76,6 +76,11 @@ export default function buildJump(
         bindingEnd,
       }
     }
+  }
+
+  // Exit condition for jump => autoJump loop
+  if (clickedDeclaration) {
+    return null
   }
 
   const origin = references.find(inAtomRange)
