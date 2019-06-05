@@ -84,7 +84,7 @@ describe('modules/svelte', () => {
     const addRangeMatchers = createAddRangeMatchers({ human: false })
     beforeEach(addRangeMatchers)
 
-    describeRefs('let in instance', '§')`
+    describeRefs('let in instance')`
       <script>
         let _fo§o_ = 'foo' ${'decl: from declaration'}
         let bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -97,7 +97,7 @@ describe('modules/svelte', () => {
       <div>{_fo§o_}</div> ${'ref: from HTML element'}
     `
 
-    describeRefs('var in instance', '§')`
+    describeRefs('var in instance')`
       <script>
         let _fo§o_ = 'foo' ${'decl: from declaration'}
         let bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -112,7 +112,7 @@ describe('modules/svelte', () => {
     `
 
     describe('const', () => {
-      describeRefs('in instance', '§')`
+      describeRefs('in instance')`
         <script>
           const _fo§o_ = 'foo' ${'decl: from declaration'}
           const bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -123,7 +123,7 @@ describe('modules/svelte', () => {
         {_fo§o_} ${'from HTML'}
         <div>{_fo§o_}</div> ${'ref: from HTML element'}
       `
-      describeRefs('in module', '§')`
+      describeRefs('in module')`
         <script context="module">
           const _fo§o_ = 'foo' ${'decl: from declaration'}
           const bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -135,7 +135,7 @@ describe('modules/svelte', () => {
         <div>{_fo§o_}</div> ${'ref: from HTML element'}
       `
       describe('shadowing', () => {
-        describeRefs('outer', '§')`
+        describeRefs('outer')`
           <script>
             const _§a_ = 1 ${'decl: from declaration'}
             console.log(_§a_) ${'ref: from usage'}
@@ -145,7 +145,7 @@ describe('modules/svelte', () => {
             }
           </script>
         `
-        describeRefs('inner', '§')`
+        describeRefs('inner')`
           <script>
             const a = 1
             console.log(a)
@@ -158,7 +158,7 @@ describe('modules/svelte', () => {
       })
     })
 
-    describeRefs('let in module', '§')`
+    describeRefs('let in module')`
       <script context="module">
         let _fo§o_ = 'foo' ${'decl: from declaration'}
         let bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -170,7 +170,7 @@ describe('modules/svelte', () => {
       <div>{_fo§o_}</div> ${'ref: from HTML element'}
     `
 
-    describeRefs('var in module', '§')`
+    describeRefs('var in module')`
       <script context="module">
         var _fo§o_ = 'foo' ${'decl: from declaration'}
         var bar = _§foo_ + 'bar' ${'ref: from reference'}
@@ -183,7 +183,7 @@ describe('modules/svelte', () => {
       <div>{_fo§o_}</div> ${'ref: from HTML element'}
     `
 
-    describeRefs('does not find shadowed variable in function', '§')`
+    describeRefs('does not find shadowed variable in function')`
       <script>
         const _foo_ = 'foo'
         (function() {
@@ -194,7 +194,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('does not find shadowed variable in block scope', '§')`
+    describeRefs('does not find shadowed variable in block scope')`
       <script>
         const _foo_ = 'foo'
         {
@@ -205,21 +205,21 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('does not match from char before', '§')`
+    describeRefs('does not match from char before')`
       <script>
         const§ foo = 'foo' ${'from declaration'}
         console.log§(foo) ${'from reference'}
       </script>
     `
 
-    describeRefs('does not match from char after', '§')`
+    describeRefs('does not match from char after')`
       <script>
         const foo§ = 'foo' ${'from declaration'}
         console.log(foo) ${'from usage'}
       </script>
     `
 
-    describeRefs('mutation in HTML', '§')`
+    describeRefs('mutation in HTML')`
       {_fo§o_ = 0} ${'mut: from HTML'}
       {@debug _f§oo_} ${'ref: from HTML'}
       <script>
@@ -227,7 +227,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('function refs', '§')`
+    describeRefs('function refs')`
       <script>
         _xx§x_() ${'ref: from TDZ'}
 
@@ -252,7 +252,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('class refs', '§')`
+    describeRefs('class refs')`
       <script context="module">
         class _Fo§o_ {} ${'decl: from class declaration'}
         _Fo§o_ = null ${'mut: from mutation'}
@@ -272,7 +272,7 @@ describe('modules/svelte', () => {
       </pre>
     `
 
-    describeRefs('class refs in block scope', '§')`
+    describeRefs('class refs in block scope')`
       <script>
         const foo = 'foo'
         {
@@ -282,7 +282,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('class refs', '§')`
+    describeRefs('class refs')`
       <script>
         class _Foo_ {}
         {
@@ -291,7 +291,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('require', '§')`
+    describeRefs('require')`
       <script>
         const _§jq_ = require('jquery') ${'decl: from declaration'}
         _§jq_('body') ${'ref: from usage'}
@@ -303,7 +303,7 @@ describe('modules/svelte', () => {
       <div>{_j§q_}</div> ${'ref: from HTML'}
     `
 
-    describeRefs('default import', '§')`
+    describeRefs('default import')`
       <script>
         import _§jq_ from 'jquery' ${'defimp: from import'}
         _§jq_('body') ${'ref: from usage'}
@@ -315,7 +315,7 @@ describe('modules/svelte', () => {
       <div>{_j§q_}</div> ${'ref: from HTML'}
     `
 
-    describeRefs('named import', '§')`
+    describeRefs('named import')`
       <script>
         import {_§jq_} from 'jquery' ${'namimp: from import'}
         _§jq_('body') ${'ref: from usage'}
@@ -327,7 +327,7 @@ describe('modules/svelte', () => {
       <div>{_j§q_}</div> ${'ref: from HTML'}
     `
 
-    describeRefs('globals', '§')`
+    describeRefs('globals')`
       <div>{_con§sole_}</div> ${'ref: from HTML'}
       <script>
         _con§sole_${'from instance'}.log(_§console_) ${'ref: from args'}
@@ -342,7 +342,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('multiple globals', '§')`
+    describeRefs('multiple globals')`
       <div>{_console_}</div>
       <script>
         _con§sole_ ${'not other globals from instance'}
@@ -354,7 +354,7 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('markup if block', '§')`
+    describeRefs('markup if block')`
       <script>
         let _f§oo_ ${'decl: from instance'}
         _f§oo_ = 100 ${'mut: from instance'}
@@ -369,7 +369,7 @@ describe('modules/svelte', () => {
       {_f§oo_} ${'ref: from mustache'}
     `
 
-    describeRefs('markup each block', '§')`
+    describeRefs('markup each block')`
       <script>
         let _f§oo_ ${'decl: from instance'}
       </script>
@@ -382,7 +382,7 @@ describe('modules/svelte', () => {
       {_f§oo_} ${'ref: from mustache'}
     `
 
-    describeRefs('inline components', '§')`
+    describeRefs('inline components')`
       <script>
         import _F§oo_ from './Foo' ${'defimp: from import'}
         console.log(_F§oo_) ${'from instance'}
@@ -425,7 +425,7 @@ describe('modules/svelte', () => {
       {/each}
     `
 
-    describeRefs('each block destructured context vars', '§')`
+    describeRefs('each block destructured context vars')`
       <script>
         let items = [{}, {}, {}]
       </script>
@@ -439,7 +439,7 @@ describe('modules/svelte', () => {
     `
 
     describe('transition', () => {
-      describeRefs('transition directive', '§')`
+      describeRefs('transition directive')`
         <div transition:_fa§de_>fade</div> ${'ref:'}
         <div transition:_fa§de_={params}>fade</div> ${'ref:'}
         <div transition:_fa§de_|local>fade</div> ${'ref:'}
@@ -449,7 +449,7 @@ describe('modules/svelte', () => {
         </script>
       `
 
-      describeRefs('default import of transition directive', '§')`
+      describeRefs('default import of transition directive')`
         <div transition:_fa§de_>fade</div> ${'ref:'}
         <div transition:_fa§de_={params}>fade</div> ${'ref:'}
         <div transition:_fa§de_|local>fade</div> ${'ref:'}
@@ -459,7 +459,7 @@ describe('modules/svelte', () => {
         </script>
       `
 
-      describeRefs('in directive', '§')`
+      describeRefs('in directive')`
         <script>
           import { _fl§y_ } from 'svelte/transition' ${'namimp:'}
         </script>
@@ -469,7 +469,7 @@ describe('modules/svelte', () => {
         <div in:_fl§y_|local={params}>fade</div> ${'ref:'}
       `
 
-      describeRefs('out directive', '§')`
+      describeRefs('out directive')`
         <script>
           import { _fl§y_, fade } from 'svelte/transition' ${'namimp:'}
         </script>
@@ -479,7 +479,7 @@ describe('modules/svelte', () => {
         <div out:_fl§y_|local={params}>fade</div> ${'ref:'}
       `
 
-      describeRefs('transition directive with variable from module', '§')`
+      describeRefs('transition directive with variable from module')`
         <script context="module">
           const _fad§e_ = {} ${'decl:'}
         </script>
@@ -490,7 +490,7 @@ describe('modules/svelte', () => {
       `
     })
 
-    describeRefs('animate directive', '§')`
+    describeRefs('animate directive')`
       <script context="module">
         import { _f§lip_ } from 'svelte/animate' ${'namimp:'}
       </script>

@@ -258,7 +258,7 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
 }
 
 export const FindsRefsTest = ({ parse, findReferences }) => {
-  const describeRefs = (title, cursor = '|', dc = describe) => (
+  const describeRefs = (title, cursor = '§', dc = describe) => (
     parts,
     ...descs
   ) => {
