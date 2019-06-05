@@ -80,7 +80,7 @@ describe('modules/svelte', () => {
     })
   })
 
-  fdescribe('findReferences(ast, loc)', () => {
+  describe('findReferences(ast, loc)', () => {
     const addRangeMatchers = createAddRangeMatchers({ human: false })
     beforeEach(addRangeMatchers)
 
