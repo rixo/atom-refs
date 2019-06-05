@@ -6,29 +6,6 @@ import byFirstRange from '../util/byFirstRange'
 import { debug } from '../../config'
 import { locToRange } from '../../util'
 
-export default function findReferences(ast, loc) {
-  let binding
-  try {
-    binding = findBinding(ast, loc)
-  } catch (err) {
-    if (err.message === "Cannot read property 'file' of undefined") {
-      // ignore this one...seems like a bug in babylon when there are
-      // duplicated const variables
-    } else {
-      throw err
-    }
-  }
-
-  if (!binding) {
-    debug('Not found')
-    return []
-  }
-
-  debug('Found', binding)
-
-  return gatherRanges(binding)
-}
-
 function gatherRanges(binding) {
   let ranges
   let refPaths
@@ -197,4 +174,27 @@ function gatherGlobalBindings(ast, { node: { name: searchName } }) {
     isGlobal: true,
     referencePaths: paths,
   }
+}
+
+export default function findReferences(ast, loc) {
+  let binding
+  try {
+    binding = findBinding(ast, loc)
+  } catch (err) {
+    if (err.message === "Cannot read property 'file' of undefined") {
+      // ignore this one...seems like a bug in babylon when there are
+      // duplicated const variables
+    } else {
+      throw err
+    }
+  }
+
+  if (!binding) {
+    debug('Not found')
+    return []
+  }
+
+  debug('Found', binding)
+
+  return gatherRanges(binding)
 }
