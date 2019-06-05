@@ -7,40 +7,40 @@ const navigateToPosition = ({ editor }, position) => {
   editor.scrollToCursorPosition()
 }
 
+const isDeclaration = ({ type }) =>
+  type === 'decl' || type === 'namimp' || type === 'defimp'
+
 export default function buildSuggestion(
   state,
-  text,
-  { start, end },
-  { findReferences }
+  point,
+  { jumpToImport, findReferences }
 ) {
   if (state.parseError) throw state.parseError
   // const { paths, scopes, externalModules } = state
-  const { ast, locator } = state
+  const {
+    ast,
+    locator,
+    locator: { getPos },
+  } = state
+  const pos = getPos(point)
 
-  const references = findReferences(ast, start, { locator })
+  const references = findReferences(ast, pos, { locator })
 
-  const declarations = references.filter(
-    ({ type }) => type === 'decl' || type === 'namimp' || type === 'defimp'
-  )
+  const declaration = references.find(isDeclaration)
 
-  const firstDecl = declarations[0]
-
-  if (firstDecl) {
-    const origin = references.find(({ start: point }) => {
-      const pos = locator.getPos(point)
-      return pos >= start && pos < end
+  if (declaration) {
+    const origin = references.find(({ start, end }) => {
+      return getPos(start) <= pos && pos < getPos(end)
     })
 
+    const range = new Range(getPos(declaration.start), getPos(declaration.end))
+    const jumpTarget = declaration.start.copy()
     if (origin) {
-      // debugger
+      const offset = pos - getPos(origin.start)
+      jumpTarget.column += offset
     }
-
-    const range = new Range(
-      locator.getPos(firstDecl.start),
-      locator.getPos(firstDecl.end)
-    )
     const callback = () => {
-      navigateToPosition(state, firstDecl.start)
+      navigateToPosition(state, jumpTarget)
     }
     return { range, callback }
   }

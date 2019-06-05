@@ -25,27 +25,22 @@ const isSvelte = textEditor => isScope(textEditor, svelteScopes)
 const jsScopes = ['source.js', 'source.js.jsx', 'javascript', 'source.flow']
 const isJavascript = textEditor => isScope(textEditor, jsScopes)
 
-export default state => () => ({
+const createHyperclickProvider = state => () => ({
   providerName: 'atom-ref',
   priority: 2, // before js-hyperclick (0) and link-hyperclick (1)
-  wordRegExp: /[$0-9\w]+/g,
-  getSuggestionForWord(textEditor, text, range) {
+  // wordRegExp: /[$0-9\w]+/g,
+  getSuggestion(textEditor, pos) {
     const findReferences =
       (isSvelte(textEditor) && findSvelteReferences) ||
       (isJavascript(textEditor) && findJsReferences)
     if (findReferences) {
       if (state.parseError) return
-
-      const buffer = textEditor.getBuffer()
-      const start = buffer.characterIndexForPosition(range.start)
-      const end = buffer.characterIndexForPosition(range.end)
-
       const options = {
+        // FIXME: not our config!
         jumpToImport: atom.config.get('js-hyperclick.jumpToImport'),
         findReferences,
       }
-      const result = buildSuggestion(state, text, { start, end }, options)
-      debug(text, result)
+      const result = buildSuggestion(state, pos, options)
       if (result) {
         return result
         // return buildResult(textEditor, range, suggestion, false)
@@ -53,3 +48,5 @@ export default state => () => ({
     }
   },
 })
+
+export default createHyperclickProvider
