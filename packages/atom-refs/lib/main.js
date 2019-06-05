@@ -113,7 +113,7 @@ export const activate = () => {
     if (scopes.includes(scopeName)) {
       state.module = modules.getModule(scopeName)
       if (!state.module) {
-        throw new Error(`Unssuported scope: ${scopeName}`)
+        throw new Error(`Unsuported scope: ${scopeName}`)
       }
       enable(state)
     } else {
