@@ -46,6 +46,7 @@
     "prettier": "prettier --write lib/**/*.js"
   },
   "dependencies": {
+    "@babel/core": "^7.4.5",
     "@babel/parser": "^7.4.4",
     "atom-refs-escope": "file:../escope",
     "babel-traverse": "^6.26.0",
