@@ -6,6 +6,14 @@ import byFirstRange from '../util/byFirstRange'
 import { debug } from '../../config'
 import { locToRange } from '../../util'
 
+const getRootScope = scope => {
+  let cur = scope
+  while (cur && cur.parent) {
+    cur = cur.parent
+  }
+  return cur
+}
+
 function gatherRanges(binding) {
   let ranges
   let refPaths
@@ -25,8 +33,8 @@ function gatherRanges(binding) {
       .filter(p => !p.isExportDeclaration())
   }
 
-  ranges = ranges.concat(
-    refPaths.map(p => {
+  ranges.push(
+    ...refPaths.map(p => {
       const range = locToRange(p.node.loc)
       range.type = 'ref'
       if (p.parentPath.isObjectProperty()) {
@@ -41,17 +49,14 @@ function gatherRanges(binding) {
     })
   )
 
-  // global doesn't have constantViolations
-  if (binding.constantViolations) {
-    ranges = ranges.concat(
-      binding.constantViolations.map(p => {
-        const node = p.node.left || p.node
-        const range = locToRange(node.loc)
-        range.type = 'mut'
-        return range
-      })
-    )
-  }
+  ranges.push(
+    ...binding.constantViolations.map(p => {
+      const node = p.node.left || p.node
+      const range = locToRange(node.loc)
+      range.type = 'mut'
+      return range
+    })
+  )
 
   ranges.sort(byFirstRange)
 
@@ -126,7 +131,7 @@ function findBinding(ast, loc) {
       ) {
         binding = scopeBinding
         path.stop()
-      } else if (scope.globals[name]) {
+      } else if (getRootScope(scope).globals[name]) {
         // global, no binding: gather global references
         binding = gatherGlobalBindings(ast, path)
         path.stop()
@@ -170,9 +175,22 @@ function gatherGlobalBindings(ast, { node: { name: searchName } }) {
     },
   }
   traverse(ast, visitor)
+  // --- post process ---
+  const referencePaths = []
+  const constantViolations = []
+  paths.forEach(path => {
+    const pp = path.parentPath
+    if (pp && pp.isAssignmentExpression() && pp.node.left === path.node) {
+      constantViolations.push(path)
+    } else {
+      referencePaths.push(path)
+    }
+  })
+  // --- result ---
   return {
     isGlobal: true,
-    referencePaths: paths,
+    referencePaths,
+    constantViolations,
   }
 }
 

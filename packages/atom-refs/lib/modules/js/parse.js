@@ -29,12 +29,10 @@ const isHtml = editor => {
   return htmlScopes.some(scope => scope === scopeName)
 }
 
-const parseSourceCode = (editor, code) => {
-  if (editor === null) {
-    return { code }
-  }
+const parseSourceCode = (editor, code, asHtml) => {
+  const isHtmlSource = asHtml != null ? asHtml : editor && isHtml(editor)
   let sourceType
-  if (isHtml(editor)) {
+  if (isHtmlSource) {
     sourceType = 'module'
     const match = scriptRe.exec(code)
     if (match && match[2]) {
@@ -49,14 +47,17 @@ const parseSourceCode = (editor, code) => {
   return { code, locator, sourceType }
 }
 
-const parseAs = ({ code, editor }, sourceType = defaultSourceType) => {
+const parseAs = (
+  { code, editor, isHtml: asHtml },
+  sourceType = defaultSourceType
+) => {
   let ast
   let error
   const {
     code: source,
     locator,
     sourceType: parsedSourceType,
-  } = parseSourceCode(editor, code)
+  } = parseSourceCode(editor, code, asHtml)
   try {
     ast = parse(source, {
       sourceType: parsedSourceType || sourceType,
