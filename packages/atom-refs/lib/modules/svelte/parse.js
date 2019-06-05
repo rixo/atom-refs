@@ -37,6 +37,16 @@ const visit = (ast, visitor) =>
     },
   })
 
+export const traverse = (ast, visitor) =>
+  walk(ast, {
+    enter(node, parent) {
+      const handler = visitor[node.type]
+      if (handler) {
+        handler.call(visitor, { node, parent })
+      }
+    },
+  })
+
 class ExtraIdentifiersVisitor {
   constructor(code) {
     this.code = code

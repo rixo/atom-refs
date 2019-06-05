@@ -165,6 +165,7 @@ const gatherRanges = (variable, locator) => {
   return references.map(ref => {
     const { start, end } = ref.identifier
     const range = locator.getRange(start, end)
+    range.identifier = ref.identifier
     range.type = resolveRangeType(ref)
     return range
   })

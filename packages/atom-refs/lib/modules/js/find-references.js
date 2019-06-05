@@ -35,6 +35,8 @@ function gatherRanges(binding) {
   if (binding.isGlobal) {
     ranges = []
     refPaths = binding.referencePaths
+      // exclude `default`
+      .filter(p => p.node.name !== 'default')
   } else {
     ranges = [getDeclRange(binding)]
     refPaths = binding.referencePaths
@@ -104,6 +106,7 @@ function getDeclRange(binding) {
     range = locToRange(identifier.loc)
   }
   range.type = 'decl'
+  range.identifier = identifier
   return range
 }
 

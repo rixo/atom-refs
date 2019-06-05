@@ -5,7 +5,7 @@ import { createLocator } from './util'
 import commands from './commands'
 import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
 import modules from './modules'
-import makeHyperclickProvider from './hyperclick/make-hyperclick-provider'
+import createHyperclickProvider from './hyperclick/hyperclick-provider'
 
 const scopes = modules.getScopes()
 
@@ -122,6 +122,7 @@ export const activate = () => {
   }
 
   const onActiveTextEditor = editor => {
+    state.ast = null
     const { disposable } = state
     if (disposable) {
       subscriptions.remove(state.disposable)
@@ -352,4 +353,4 @@ export const consumeIndie = registerIndie => {
   state.linter = linter
 }
 
-export const getHyperclickProvider = makeHyperclickProvider(state)
+export const getHyperclickProvider = createHyperclickProvider(state)
