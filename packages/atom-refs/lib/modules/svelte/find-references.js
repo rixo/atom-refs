@@ -4,6 +4,8 @@ import { uniq, flatten, compose } from 'underscore-plus'
 
 import { debug } from '../../config'
 
+import byFirstRange from '../util/byFirstRange'
+
 // using import kills eslint :(
 // import { walk } from './svelte'
 const { walk } = require('./svelte')
@@ -180,7 +182,11 @@ const findReferences = (ast, loc, { locator }) => {
     const ranges = gatherRanges(variable, locator)
     return result.concat(ranges)
   }, [])
+  // sort
+  ranges.sort(byFirstRange)
+  // dev
   debug('Found', ranges)
+  // return
   return ranges
 }
 

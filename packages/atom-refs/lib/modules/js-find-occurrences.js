@@ -3,6 +3,7 @@
 import traverse from 'babel-traverse'
 import { locToRange } from '../util'
 import { debug } from '../config'
+import byFirstRange from './util/byFirstRange'
 
 export function findReferences(ast, loc) {
   let binding
@@ -72,20 +73,7 @@ function gatherRanges(binding) {
     )
   }
 
-  ranges.sort(
-    (
-      { start: { column: ca, row: ra } },
-      { start: { column: cb, row: rb } }
-    ) => {
-      if (ra < rb) {
-        return -1
-      } else if (ra > rb) {
-        return 1
-      } else {
-        return ca - cb
-      }
-    }
-  )
+  ranges.sort(byFirstRange)
 
   return ranges
 }
