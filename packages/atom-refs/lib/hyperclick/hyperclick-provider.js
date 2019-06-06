@@ -2,7 +2,7 @@
 
 import buildJump from './build-jump'
 import { navigateTo } from './navigate'
-import { getCached } from './cache'
+import { getEntry } from '../cache'
 
 function buildSuggestion(editor, jump) {
   if (jump) {
@@ -19,7 +19,7 @@ const createHyperclickProvider = () => () => {
     priority: 2, // before js-hyperclick (0) and link-hyperclick (1)
     getSuggestion(editor, point) {
       // subscriptions.add(watchEditor(editor))
-      const info = getCached(editor)
+      const info = getEntry(editor).getJumpContext()
       const jump = buildJump(info, point)
       if (jump) {
         return buildSuggestion(editor, jump)

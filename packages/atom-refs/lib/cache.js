@@ -5,7 +5,6 @@ import { CompositeDisposable } from 'atom'
 import Debug from 'debug'
 
 import { resolveScopeLang } from './hyperclick/langs'
-
 import modules from './modules'
 import { createLocator } from './util'
 
@@ -91,7 +90,8 @@ function CacheItem({ getCode, scope }) {
 
   const getAst = () => ast || (ast = parseAst())
 
-  const getRefsContext = () => refsContext || (refsContext = parseRefsContext())
+  const getRefsContext = () =>
+    refsContext || (refsContext = parseRefsContext(refsModule, getCode()))
 
   const getJumpContext = () => {
     debug('CacheItem:getJumpContext')
@@ -206,7 +206,11 @@ const createDetachedItem = path =>
     getCode: () => (fs.existsSync(path) && fs.readFileSync(path, 'utf8')) || '',
   })
 
-export function get(path) {
+export function getEntry(path) {
+  // duck typing TextEditor
+  if (path && path.getPath) {
+    path = path.getPath()
+  }
   if (data.has(path)) {
     return data.get(path)
   } else {

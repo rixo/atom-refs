@@ -5,7 +5,7 @@ import shell from 'shell'
 
 import buildJump from './build-jump'
 import { requireJSH } from './util'
-import { get as getEntry } from '../cache'
+import { getEntry } from '../cache'
 
 const resolveModule = requireJSH('/lib/core/resolve-module')
 const makeRequire = requireJSH('/lib/require-if-trusted')
