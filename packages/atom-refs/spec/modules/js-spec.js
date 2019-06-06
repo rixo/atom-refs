@@ -113,4 +113,11 @@ describe('modules/js findReferences(ast, loc)', () => {
       _cons§ole_ = null ${'mut:'}
     }
   `
+
+  // TODO this probably don't work with flow...
+  // test case: js-hyperclick/lib/core/resolve-module.js:50:45
+  describeRefs('bug with flow?')`
+    const { extensions = defaultExtensions, _req§uireIfTrusted_ } = options
+    const customResolver = _requireIf§Trusted_(resolver)
+  `
 })
