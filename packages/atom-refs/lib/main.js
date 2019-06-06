@@ -1,6 +1,7 @@
 'use babel'
 
 import { CompositeDisposable } from 'atom'
+import dedent from 'dedent'
 
 import * as cache from './cache'
 import commands from './commands'
@@ -11,6 +12,39 @@ import { createLocator } from './util'
 
 import Debug from 'debug'
 Debug.enable('atom-refs:*')
+
+export const config = {
+  extensions: {
+    description:
+      "Comma separated list of extensions to check for when a file isn't found",
+    type: 'array',
+    default: ['.js', '.svelte', '.jsx', '.vue', '.json', '.node'],
+    items: { type: 'string' },
+  },
+  usePendingPanes: {
+    type: 'boolean',
+    default: false,
+  },
+  jumpToImport: {
+    type: 'boolean',
+    default: false,
+    description: dedent`
+      Jump to the import statement instead of leaving the current file.
+      You can still click the import to switch files.
+    `,
+  },
+  skipIntermediate: {
+    type: 'boolean',
+    default: true,
+    title: `Jump through intermediate links`,
+    description: dedent`
+      When you land at your destination, atom-refs checks to see if
+      that is a link and then follows it. This is mostly useful to skip
+      over files that \`export ... from './otherfile'\`. You will land in
+      \`./otherfile\` instead of at that export.
+    `,
+  },
+}
 
 const allSupportedScopes = modules.getScopes()
 

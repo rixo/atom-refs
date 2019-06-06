@@ -31,7 +31,7 @@ function goToBinding(editor, point) {
 function goToFinalDestination(editor, { filename, destination }) {
   const options = {
     // TODO package
-    pending: atom.config.get('js-hyperclick.usePendingPanes'),
+    pending: atom.config.get('atom-refs.usePendingPanes'),
   }
   atom.workspace.open(filename, options).then(editor => {
     if (destination) {
@@ -84,7 +84,7 @@ function resolveNextJump(jump) {
 
   const resolveOptions = {
     // FIXME NOT our config
-    extensions: atom.config.get('js-hyperclick.extensions'),
+    extensions: atom.config.get('atom-refs.extensions'),
     requireIfTrusted,
   }
 
@@ -138,7 +138,7 @@ function resolveNextJump(jump) {
 
 function resolveAutoJump(path, fromPoint) {
   // TODO config package
-  if (!atom.config.get('js-hyperclick.skipIntermediate')) {
+  if (!atom.config.get('atom-refs.skipIntermediate')) {
     return
   }
 
@@ -157,7 +157,7 @@ function resolveAutoJump(path, fromPoint) {
   if (
     nextJump.type === 'from-import' &&
     // TODO config package
-    atom.config.get('js-hyperclick.jumpToImport')
+    atom.config.get('atom-refs.jumpToImport')
   ) {
     return
   }

@@ -3,7 +3,7 @@
 const isDeclaration = ({ type }) =>
   type === 'decl' || type === 'namimp' || type === 'defimp'
 
-const isCrossFiles = () => !atom.config.get('js-hyperclick.jumpToImport')
+const isCrossFiles = () => !atom.config.get('atom-refs.jumpToImport')
 
 export default function buildJump(
   { parseError, paths, externalModules, findReferencesAt, getPos },
