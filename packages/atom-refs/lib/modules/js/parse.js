@@ -24,13 +24,10 @@ const defaultSourceType = isBabelParser ? 'unambiguous' : 'script'
 const scriptRe = /(^[\s\S]*<script\b[^>]*>)([\s\S]*)<\/script>/
 
 const htmlScopes = ['source.svelte', 'text.html.vue', 'text.html.basic']
-const isHtml = editor => {
-  const scopeName = editor.getGrammar().scopeName
-  return htmlScopes.some(scope => scope === scopeName)
-}
+const isHtml = scopeName => htmlScopes.some(scope => scope === scopeName)
 
-const parseSourceCode = (editor, code, asHtml) => {
-  const isHtmlSource = asHtml != null ? asHtml : editor && isHtml(editor)
+const parseSourceCode = (scopeName, code, asHtml) => {
+  const isHtmlSource = asHtml != null ? asHtml : scopeName && isHtml(scopeName)
   let sourceType
   if (isHtmlSource) {
     sourceType = 'module'
@@ -47,17 +44,14 @@ const parseSourceCode = (editor, code, asHtml) => {
   return { code, locator, sourceType }
 }
 
-const parseAs = (
-  { code, editor, isHtml: asHtml },
-  sourceType = defaultSourceType
-) => {
+const parseAs = ({ code, scopeName }, sourceType = defaultSourceType) => {
   let ast
   let error
   const {
     code: source,
     locator,
     sourceType: parsedSourceType,
-  } = parseSourceCode(editor, code, asHtml)
+  } = parseSourceCode(scopeName, code)
   try {
     ast = parse(source, {
       sourceType: parsedSourceType || sourceType,
@@ -68,7 +62,9 @@ const parseAs = (
     })
   } catch (err) {
     if (sourceType === 'script' && isModuleError(err)) {
-      return parseAs({ code: source, editor: null }, 'module')
+      // TODO should scopeName be passed here? (it was when I refactored
+      // editor -> scopeName, but I'm not sure why...)
+      return parseAs({ code: source }, 'module')
     } else if (err instanceof SyntaxError && err.loc) {
       error = err
     } else {

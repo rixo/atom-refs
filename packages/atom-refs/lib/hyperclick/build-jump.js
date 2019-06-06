@@ -6,13 +6,23 @@ const isDeclaration = ({ type }) =>
 const isCrossFiles = () => !atom.config.get('atom-refs.jumpToImport')
 
 export default function buildJump(
-  { parseError, paths, externalModules, findReferencesAt, getPos },
+  {
+    parseError,
+    unsupportedScope,
+    paths,
+    externalModules,
+    findReferencesAt,
+    getPos,
+  },
   point
 ) {
   if (parseError) {
     throw new Error('Previous parse error: ' + parseError.stack || parseError)
     // atom.notifications.addWarning('atom-refs', { detail: String(parseError) })
     // return
+  }
+  if (unsupportedScope) {
+    throw new Error('Unsupported scope: ' + unsupportedScope)
   }
 
   const pos = getPos(point)

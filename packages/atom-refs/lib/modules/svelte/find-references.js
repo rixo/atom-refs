@@ -2,9 +2,11 @@
 
 import { uniq, flatten, compose } from 'underscore-plus'
 
-import { debug } from '../../config'
+import { Debug } from '../../config'
 
 import byFirstRange from '../util/byFirstRange'
+
+const debug = Debug('svelte:findReferences')
 
 // using import kills eslint :(
 // import { walk } from './svelte'

@@ -3,8 +3,10 @@
 import traverse from 'babel-traverse'
 
 import byFirstRange from '../util/byFirstRange'
-import { debug } from '../../config'
+import { Debug } from '../../config'
 import { locToRange } from '../../util'
+
+const debug = Debug('js:findReferences')
 
 const getRootScope = scope => {
   let cur = scope

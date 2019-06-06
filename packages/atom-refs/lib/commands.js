@@ -1,21 +1,21 @@
 'use babel'
 
-const getVimMode = (vim, editor) => {
-  const state = vim.getEditorState(editor)
-  if (state) {
-    const { mode, submode } = state
-    return [mode, submode]
-  }
-}
+// const getVimMode = (vim, editor) => {
+//   const state = vim.getEditorState(editor)
+//   if (state) {
+//     const { mode, submode } = state
+//     return [mode, submode]
+//   }
+// }
+//
+// const setVimMode = (vimService, editor, [mode, submode]) => {
+//   const state = vimService.getEditorState(editor)
+//   if (state) {
+//     state.activate(mode, submode)
+//   }
+// }
 
-const setVimMode = (vimService, editor, [mode, submode]) => {
-  const state = vimService.getEditorState(editor)
-  if (state) {
-    state.activate(mode, submode)
-  }
-}
-
-const select = state => e => {
+const select = state => () => {
   const { editor, ranges, vim } = state
   if (!editor || !ranges) {
     return
@@ -31,8 +31,12 @@ const select = state => e => {
 }
 select.scope = 'atom-text-editor'
 
-const next = state => e => {
-  const { ranges, editor, locator } = state
+const next = state => () => {
+  const {
+    ranges,
+    editor,
+    refs: { locator },
+  } = state
   if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
@@ -58,8 +62,12 @@ const next = state => e => {
 }
 next.scope = 'atom-text-editor'
 
-const previous = state => e => {
-  const { ranges, editor, locator } = state
+const previous = state => () => {
+  const {
+    ranges,
+    editor,
+    refs: { locator },
+  } = state
   if (!ranges || !ranges.length || !editor || !locator) {
     return
   }
@@ -85,7 +93,7 @@ const previous = state => e => {
 }
 previous.scope = 'atom-text-editor'
 
-const findCurrentIndex = ({ ranges, locator }, cursor) => {
+const findCurrentIndex = ({ ranges, refs: { locator } }, cursor) => {
   const bufferPosition = cursor.getBufferPosition()
   const pos = locator(bufferPosition)
   return ranges.findIndex(

@@ -1,17 +1,27 @@
 'use babel'
 
+// watch debug config
+{
+  const Debug = require('debug')
+  atom.config.observe('atom-refs.debug', value => {
+    Debug.disable('atom-refs:*')
+    if (value) {
+      Debug.enable(`atom-refs:${value}`)
+    }
+  })
+}
+
 import { CompositeDisposable } from 'atom'
 import dedent from 'dedent'
 
-import * as cache from './cache'
+import { watchEditor, attachEditor, getEntry } from './cache'
 import commands from './commands'
 import createHyperclickProvider from './hyperclick/hyperclick-provider'
-import modules from './modules'
-import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
-import { createLocator } from './util'
+import { PACKAGE, Debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
 
-import Debug from 'debug'
-Debug.enable('atom-refs:*')
+const debug = Debug('main')
+
+debug('entering')
 
 export const config = {
   extensions: {
@@ -36,7 +46,7 @@ export const config = {
   skipIntermediate: {
     type: 'boolean',
     default: true,
-    title: `Jump through intermediate links`,
+    title: 'Jump through intermediate links',
     description: dedent`
       When you land at your destination, atom-refs checks to see if
       that is a link and then follows it. This is mostly useful to skip
@@ -44,26 +54,46 @@ export const config = {
       \`./otherfile\` instead of at that export.
     `,
   },
+  debug: {
+    type: 'string',
+    default: '',
+    title: 'Debug',
+    description: dedent`
+      [Debug](https://www.npmjs.com/package/debug) keys. They are
+      automatically prefixed with \`atom-refs\`. \`*\` for everything.
+    `,
+  },
 }
-
-const allSupportedScopes = modules.getScopes()
 
 let subscriptions = new CompositeDisposable()
 
 const state = {
   vim: null,
-  module: null,
+  get module() {
+    throw new Error('deprecated: state.module')
+  },
   editor: null,
   disposable: null,
   activeDisposable: null,
-  locator: null,
+  get locator() {
+    throw new Error('deprecated: state.locator')
+  },
   cursorBufferPositions: [],
-  // ast: null,
-  parseError: null,
-  ranges: [],
-  markers: [],
+  get ast() {
+    throw new Error('deprecated: state.ast')
+  },
+  get parseError() {
+    throw new Error('deprecated: state.parseError')
+  },
+  ranges: [], // TODO move to refsContext & deprecate
+  markers: [], // TODO move to refsContext & deprecate
   linter: null,
+  get refs() {
+    return getRefsContext()
+  },
 }
+
+const getRefsContext = () => getEntry(state.editor).getRefsContext()
 
 export const activate = () => {
   subscriptions = new CompositeDisposable()
@@ -97,20 +127,10 @@ export const activate = () => {
   }
 
   const applyBufferChanged = () => {
-    const {
-      editor,
-      module: { parse },
-    } = state
+    const { editor } = state
     setChanging(false)
     // guard: no editor -- this can happen when all tabs are closed at once
     if (!editor) return
-    const code = editor.getText()
-    debug('onBufferChanged parse')
-    const parsed = parse({ code, editor })
-    state.locator = parsed.locator || createLocator(code)
-    debug('onBufferChanged parsed', parsed)
-    state.ast = parsed.ast
-    state.parseError = parsed.error
     updateReferences(state)
   }
 
@@ -147,22 +167,17 @@ export const activate = () => {
     : applyCursorMoved
 
   const onChangeGrammar = () => {
-    const { editor } = state
-    const grammar = editor.getGrammar()
-    const scopeName = grammar.scopeName
-    if (allSupportedScopes.includes(scopeName)) {
-      state.module = modules.getModule(scopeName)
-      if (!state.module) {
-        throw new Error(`Unsuported scope: ${scopeName}`)
-      }
-      enable(state)
-    } else {
+    const { unsupportedScope } = getRefsContext()
+    if (unsupportedScope) {
       disable(state)
+    } else {
+      enable(state)
     }
   }
 
   const onTextEditor = editor => {
-    cache.watchEditor(subscriptions, editor)
+    debug('watchEditor', editor.getPath())
+    watchEditor(subscriptions, editor)
   }
 
   const onActiveTextEditor = editor => {
@@ -188,10 +203,9 @@ export const activate = () => {
         }
       })
       onChangeGrammar()
-    }
-
-    if (editor) {
-      cache.attachEditor(subscriptions, editor)
+      // cache: ensure font editor is the one attached to the cache entry
+      debug('attachEditor', editor.getPath())
+      attachEditor(subscriptions, editor)
     }
   }
 
@@ -248,8 +262,7 @@ const handleParseError = state => {
   state.lintTimeout = setTimeout(handler, LINT_THROTTLE)
 }
 
-const displayParseError = state => {
-  const { editor, linter, parseError, markers } = state
+const displayParseError = ({ editor, linter, parseError, markers }) => {
   if (!parseError) {
     return
   }
@@ -330,8 +343,7 @@ const displayParseError = state => {
   }
 }
 
-const clearMarkers = state => {
-  const { markers } = state
+const clearMarkers = ({ markers }) => {
   if (markers) {
     state.markers.forEach(marker => marker.destroy())
   }
@@ -351,16 +363,12 @@ const getDisplayType = type => {
 const updateReferences = state => {
   // remove existing markers
   clearMarkers(state)
-  const {
-    editor,
-    markers,
-    cursorBufferPositions: positions,
-    locator,
-    ast,
-    parseError,
-    linter,
-    module: { findReferences },
-  } = state
+  const { editor, markers, cursorBufferPositions: positions, linter } = state
+  // guard: editor lost in asyncorcery
+  if (!editor) {
+    return
+  }
+  const { parseError, pointToPos, findReferencesAt } = getRefsContext()
   // guard: parse error
   if (parseError) {
     handleParseError(state)
@@ -373,22 +381,19 @@ const updateReferences = state => {
     }
   }
   // references
-  if (locator && ast) {
-    const cursorLocations = positions.map(locator)
-    cursorLocations.forEach(location => {
-      const { locator } = state
-      const ranges = findReferences(ast, location, { locator })
-      state.ranges = ranges
-      ranges.forEach(range => {
-        const marker = editor.markBufferRange(range)
-        const cls = range.type
-          ? `refactor-${getDisplayType(range.type)}`
-          : 'refactor-reference'
-        editor.decorateMarker(marker, { type: 'highlight', class: cls })
-        markers.push(marker)
-      })
+  positions.forEach(point => {
+    const pos = pointToPos(point)
+    const ranges = findReferencesAt(pos)
+    state.ranges = ranges
+    ranges.forEach(range => {
+      const marker = editor.markBufferRange(range)
+      const cls = range.type
+        ? `refactor-${getDisplayType(range.type)}`
+        : 'refactor-reference'
+      editor.decorateMarker(marker, { type: 'highlight', class: cls })
+      markers.push(marker)
     })
-  }
+  })
 }
 
 export const consumeVimModePlus = service => {

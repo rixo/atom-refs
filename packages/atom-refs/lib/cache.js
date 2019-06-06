@@ -2,17 +2,19 @@
 
 import fs from 'fs'
 import { CompositeDisposable } from 'atom'
-import Debug from 'debug'
 
+import { parseRefsContext } from './refs'
 import { resolveScopeLang } from './hyperclick/langs'
 import modules from './modules'
 import { createLocator } from './util'
+import { Debug } from './config'
 
-const debug = Debug('atom-refs:cache')
+import Data from './cache/data'
+
+const debug = Debug('cache')
 
 const editors = new WeakSet()
-// const data = new WeakMap()
-const data = new Map()
+const data = new Data()
 
 const scopesByExtension = {
   html: 'text.html.basic',
@@ -44,39 +46,21 @@ function getFileScope(filename) {
 }
 
 // This is a class. Usage: new CacheItem(...)
-function CacheItem({ getCode, scope }) {
-  // const path = _path
+function CacheItem({ owner: _owner, path: _path, getCode, scope, isValid }) {
+  const owner = _owner
+  const path = _path
 
+  // depends on: scope
   const refsModule = modules.getModule(scope)
   const jumpLang = resolveScopeLang(scope)
 
+  // depends on: scope, code
   let locator
   let ast
   let refsContext
   let jumpContext
 
-  let lastHash
-
-  // const setScope = _scope => {
-  //   if (scope === _scope) {
-  //     return
-  //   }
-  //   scope = _scope
-  //   // resolve handlers
-  //
-  //   // reset deps
-  //   invalidate()
-  // }
-
-  const invalidate = hash => {
-    // exit early if content has not changed base on hash key, but if argument
-    // is undefined, that means force invalidate
-    if (hash !== undefined) {
-      if (lastHash === hash) {
-        return
-      }
-    }
-    lastHash = hash
+  const invalidate = () => {
     // reset deps
     locator = null
     ast = null
@@ -84,18 +68,31 @@ function CacheItem({ getCode, scope }) {
     jumpContext = null
   }
 
-  const getLocator = () => locator || (locator = createLocator())
+  const getPath = () => path
+
+  const isOwner = obj => obj === owner
+
+  const getLocator = () => locator || (locator = createLocator(getCode()))
 
   const getScope = () => scope
 
   const getAst = () => ast || (ast = parseAst())
 
-  const getRefsContext = () =>
-    refsContext || (refsContext = parseRefsContext(refsModule, getCode()))
+  const getRefsContext = () => {
+    return (
+      refsContext ||
+      (refsContext = parseRefsContext.call(this, refsModule, getCode()))
+    )
+  }
 
   const getJumpContext = () => {
     debug('CacheItem:getJumpContext')
-    return jumpContext || (jumpContext = jumpLang.createJumpContext(getCode()))
+    if (!jumpContext) {
+      jumpContext = jumpLang
+        ? jumpLang.createJumpContext(getCode())
+        : { unsupportedScope: scope }
+    }
+    return jumpContext
   }
 
   const parseAst = () => {
@@ -107,27 +104,41 @@ function CacheItem({ getCode, scope }) {
     return refsModule.parse({ code })
   }
 
-  return Object.assign(this || {}, {
-    // setScope,
+  const me = this || {}
+
+  Object.assign(me, {
     invalidate,
-    // setCode,
+    getPath, // for debug
+    isOwner, // for replace
+  })
+
+  assignInterceptables(isValid, invalidate, me, {
     getLocator,
     getScope,
     getAst,
     getRefsContext,
     getJumpContext,
   })
+
+  return me
 }
 
-function setItem(path, item) {
-  data.set(path, item)
-}
-
-function invalidateItem(path) {
-  const item = data.get(path)
-  if (item) {
-    item.invalidate()
+// isValid: if provided, isValid is called before interceptable methods
+//   and cache is cleared if isValid returns falsy -- this is "pull"
+//   change detection, for filesystem, as opposed to "push" for text
+//   editor buffers that have events
+function assignInterceptables(isValid, invalidate, target, handlers) {
+  if (!isValid) {
+    return Object.assign(target, handlers)
   }
+  Object.entries(handlers).forEach(([key, getter]) => {
+    target[key] = (...args) => {
+      if (!isValid()) {
+        invalidate()
+      }
+      return getter(...args)
+    }
+  })
 }
 
 // ensure the given editor is used as reference for scope/code
@@ -136,26 +147,25 @@ export function attachEditor(subscriptions, editor) {
 }
 
 export function watchEditor(subscriptions, editor, forceAttach) {
-  const isNew = !editors.has(editor)
-  debug('watchEditor', isNew)
+  const alreadyExists = editors.has(editor)
+  debug('watchEditor', alreadyExists)
 
   const refreshItem = () => {
     const path = editor.getPath()
-    const item = new CacheItem({
-      scope: getEditorScope(editor),
-      getCode: () => editor.getText(),
-    })
-    item.editor = editor
-    setItem(path, item)
+    const createItem = () => createEditorItem(editor)
+    // only replace if we're the currently attached editor, otherwise it
+    // should mean that there's another editor instance opened with the
+    // same buffer/file, and that has been active more recently than ours
+    data.replace(editor, path, createItem)
   }
 
-  // if editor is already known: ensure the current cache item is
-  // attached to this editor
-  if (!isNew) {
+  if (alreadyExists) {
+    // forceAttach: ensure the current cache item is attached to
+    //   _this_ editor as reference for scope & code
     if (forceAttach) {
       const path = editor.getPath()
       const item = data.get(path)
-      if (!item || item.editor !== editor) {
+      if (!item || !item.isOwner(editor)) {
         refreshItem()
       }
     }
@@ -168,7 +178,7 @@ export function watchEditor(subscriptions, editor, forceAttach) {
 
   const invalidate = () => {
     const path = editor.getPath()
-    invalidateItem(path)
+    data.invalidate(path, editor)
   }
 
   refreshItem()
@@ -177,15 +187,26 @@ export function watchEditor(subscriptions, editor, forceAttach) {
   const disposable = new CompositeDisposable()
   disposable.add(
     editor.onDidDestroy(() => {
+      // forgetting the editor may not be strictly needed since it's being
+      // destroyed... but surely it won't harm!
       editors.delete(editor)
       // detach
       detachEditor(editor)
       // cleanup
       disposable.dispose()
-      subscriptions.remove(disposable)
+      subscriptions.remove(disposable) // prevent mem leak in subscriptions
     }),
     editor.onDidChange(invalidate),
-    editor.onDidChangeGrammar(refreshItem)
+    editor.onDidChangeGrammar(refreshItem),
+    {
+      // on dispose, all the above watchers will be removed, but the editor
+      // won't necessarilly be destroyed (when package is disabled/enabled
+      // with editors that remain opened). so we need to forget it so that
+      // it will be correctly rewired if needed.
+      dispose() {
+        editors.delete(editor)
+      },
+    }
   )
   subscriptions.add(disposable)
 }
@@ -195,16 +216,53 @@ export function watchEditor(subscriptions, editor, forceAttach) {
 function detachEditor(editor) {
   const path = editor.getPath()
   const item = data.get(editor.getPath())
-  if (item && item.editor === editor) {
+  if (item && item.isOwner(editor)) {
     data.delete(path)
   }
 }
 
-const createDetachedItem = path =>
+const createEditorItem = editor =>
   new CacheItem({
-    scope: getFileScope(path),
-    getCode: () => (fs.existsSync(path) && fs.readFileSync(path, 'utf8')) || '',
+    owner: editor,
+    path: editor.getPath(),
+    scope: getEditorScope(editor),
+    getCode: () => editor.getText(),
   })
+
+const createDetachedItem = path => {
+  let lastModTime = null
+  let lastExists = null
+
+  // TODO async?
+  const getCode = () =>
+    (fs.existsSync(path) && fs.readFileSync(path, 'utf8')) || ''
+
+  // use last mod time to ensure that the cache is still valid. this is
+  // simpler (and more reliable?) that managing file watchers.
+  const isValid = () => {
+    const exists = fs.existsSync(path)
+    const mtime = fs.statSync(path).mtime
+
+    const previousExists = lastExists
+    const previousModTime = lastModTime
+
+    lastExists = exists
+    lastModTime = mtime
+
+    // if previous exists is null, then so does previous mod time
+    if (previousExists === null) {
+      return true
+    }
+    return exists === previousExists && mtime === previousModTime
+  }
+
+  return new CacheItem({
+    path,
+    scope: getFileScope(path),
+    getCode,
+    isValid,
+  })
+}
 
 export function getEntry(path) {
   // duck typing TextEditor

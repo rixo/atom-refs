@@ -1,7 +1,9 @@
 'use babel'
 
 import { lazy } from './util'
-import { debug } from '../config'
+import { Debug } from '../config'
+
+const debug = Debug('php')
 
 const scopes = ['text.html.php']
 
