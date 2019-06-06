@@ -2,7 +2,7 @@
 
 import buildJump from './build-jump'
 import { navigateTo } from './navigate'
-import { initCache, getCached } from './cache'
+import { getCached } from './cache'
 
 function buildSuggestion(editor, jump) {
   if (jump) {
@@ -13,20 +13,14 @@ function buildSuggestion(editor, jump) {
   }
 }
 
-const createHyperclickProvider = state => () => {
-  initCache(state.subscriptions)
-
+const createHyperclickProvider = () => () => {
   return {
-    providerName: 'atom-ref',
+    providerName: 'atom-refs',
     priority: 2, // before js-hyperclick (0) and link-hyperclick (1)
-    // wordRegExp: /[$0-9\w]+/g,
     getSuggestion(editor, point) {
-      if (state.parseError) return
-
+      // subscriptions.add(watchEditor(editor))
       const info = getCached(editor)
-
       const jump = buildJump(info, point)
-
       if (jump) {
         return buildSuggestion(editor, jump)
       }

@@ -17,19 +17,12 @@ const parseInfo = svelteAst => {
     paths: [],
     scopes: [],
   }
-  const infos = {
-    module: null,
-    instance: null,
-    svelte,
-  }
   if (ast.module) {
     const info = parseJumpContext(ast.module.content, traverse)
-    infos.module = info
     Object.assign(svelte, info)
   }
   if (ast.instance) {
     const info = parseJumpContext(ast.instance.content, traverse)
-    infos.instance = info
     Object.assign(svelte, {
       // imports in instance are not real imports (they're public props)
       externalModules: [...svelte.externalModules, ...info.externalModules],

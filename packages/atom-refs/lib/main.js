@@ -1,16 +1,22 @@
 'use babel'
 
 import { CompositeDisposable } from 'atom'
-import { createLocator } from './util'
-import commands from './commands'
-import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
-import modules from './modules'
-import createHyperclickProvider from './hyperclick/hyperclick-provider'
 
-const scopes = modules.getScopes()
+import * as cache from './cache'
+import commands from './commands'
+import createHyperclickProvider from './hyperclick/hyperclick-provider'
+import modules from './modules'
+import { PACKAGE, debug, cursorChangeThrottle, LINT_THROTTLE } from './config'
+import { createLocator } from './util'
+
+import Debug from 'debug'
+Debug.enable('atom-refs:*')
+
+const allSupportedScopes = modules.getScopes()
+
+let subscriptions = new CompositeDisposable()
 
 const state = {
-  subscriptions: null,
   vim: null,
   module: null,
   editor: null,
@@ -18,7 +24,7 @@ const state = {
   activeDisposable: null,
   locator: null,
   cursorBufferPositions: [],
-  ast: null,
+  // ast: null,
   parseError: null,
   ranges: [],
   markers: [],
@@ -26,7 +32,7 @@ const state = {
 }
 
 export const activate = () => {
-  const subscriptions = new CompositeDisposable()
+  subscriptions = new CompositeDisposable()
   state.subscriptions = subscriptions
 
   let bufferChangedTimeout = null
@@ -110,7 +116,7 @@ export const activate = () => {
     const { editor } = state
     const grammar = editor.getGrammar()
     const scopeName = grammar.scopeName
-    if (scopes.includes(scopeName)) {
+    if (allSupportedScopes.includes(scopeName)) {
       state.module = modules.getModule(scopeName)
       if (!state.module) {
         throw new Error(`Unsuported scope: ${scopeName}`)
@@ -144,6 +150,10 @@ export const activate = () => {
         }
       })
       onChangeGrammar()
+    }
+
+    if (editor) {
+      cache.watchEditor(subscriptions, editor)
     }
   }
 
@@ -182,11 +192,10 @@ export const activate = () => {
 }
 
 export const deactivate = () => {
-  const { subscriptions } = state
   clearMarkers(state)
   if (subscriptions) {
     subscriptions.dispose()
-    state.subscriptions = null
+    subscriptions = new CompositeDisposable()
   }
 }
 
@@ -349,8 +358,11 @@ export const consumeIndie = registerIndie => {
   const linter = registerIndie({
     name: PACKAGE,
   })
-  state.subscriptions.add(linter)
+  subscriptions.add(linter)
   state.linter = linter
 }
 
-export const getHyperclickProvider = createHyperclickProvider(state)
+export const getHyperclickProvider = createHyperclickProvider({
+  // NOTE subscriptions might change after disable/enable cycle
+  add: (...disposables) => subscriptions.add(...disposables),
+})
