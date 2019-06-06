@@ -8,7 +8,7 @@ import byFirstRange from '../util/byFirstRange'
 
 // using import kills eslint :(
 // import { walk } from './svelte'
-const { walk } = require('./svelte')
+const { walk } = require('./_svelte')
 
 const isGlobal = Symbol('isGlobal')
 

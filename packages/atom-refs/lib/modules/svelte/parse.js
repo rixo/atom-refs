@@ -6,7 +6,7 @@ import { analyze } from 'atom-refs-escope'
 /* eslint-disable-plugin import */
 // nothing cut it: using import kills eslint :(
 // import { compile, parse } from './svelte'
-const { compile, parse, walk } = require('./svelte')
+const { compile, parse, walk } = require('./_svelte')
 
 const PARSE_WITH_COMPILE = true
 
