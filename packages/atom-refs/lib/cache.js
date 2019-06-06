@@ -1,5 +1,6 @@
 'use babel'
 
+import fs from 'fs'
 import { CompositeDisposable } from 'atom'
 import Debug from 'debug'
 
@@ -14,12 +15,33 @@ const editors = new WeakSet()
 // const data = new WeakMap()
 const data = new Map()
 
-// TODO config
-const isHtml = path => /\.(?:html|htm|vue|svelte)(?:\?.*)?$/i.test(path)
+const scopesByExtension = {
+  html: 'text.html.basic',
+  htm: 'text.html.basic',
+  vue: 'text.html.vue',
+  svelte: 'source.svelte',
+  jsx: 'source.js.jsx',
+  js: 'source.js.jsx',
+}
+const defaultScope = 'source.js.jsx'
 
 const getEditorScope = editor => {
   const grammar = editor.getGrammar()
   return grammar.scopeName
+}
+
+function getFileScope(filename) {
+  const match = /\.([^.?]+)(?:\?.*)?$/.exec(filename)
+  const extension = match && match[1]
+  if (scopesByExtension[extension]) {
+    return scopesByExtension[extension]
+  } else {
+    const detail =
+      `Unable to detect scope for file: ${filename}.` +
+      ` Using default scope: ${defaultScope}`
+    atom.notifications.addWarning('atom-refs', { detail })
+    return defaultScope
+  }
 }
 
 // This is a class. Usage: new CacheItem(...)
@@ -36,16 +58,16 @@ function CacheItem({ getCode, scope }) {
 
   let lastHash
 
-  const setScope = _scope => {
-    if (scope === _scope) {
-      return
-    }
-    scope = _scope
-    // resolve handlers
-
-    // reset deps
-    invalidate()
-  }
+  // const setScope = _scope => {
+  //   if (scope === _scope) {
+  //     return
+  //   }
+  //   scope = _scope
+  //   // resolve handlers
+  //
+  //   // reset deps
+  //   invalidate()
+  // }
 
   const invalidate = hash => {
     // exit early if content has not changed base on hash key, but if argument
@@ -64,6 +86,8 @@ function CacheItem({ getCode, scope }) {
   }
 
   const getLocator = () => locator || (locator = createLocator())
+
+  const getScope = () => scope
 
   const getAst = () => ast || (ast = parseAst())
 
@@ -84,10 +108,11 @@ function CacheItem({ getCode, scope }) {
   }
 
   return Object.assign(this || {}, {
-    setScope,
+    // setScope,
     invalidate,
     // setCode,
     getLocator,
+    getScope,
     getAst,
     getRefsContext,
     getJumpContext,
@@ -105,14 +130,12 @@ function invalidateItem(path) {
   }
 }
 
-// function setItemScope(path, scope) {
-//   const item = data.get(path)
-//   if (item) {
-//     item.setScope(scope)
-//   }
-// }
+// ensure the given editor is used as reference for scope/code
+export function attachEditor(subscriptions, editor) {
+  watchEditor(subscriptions, editor, true)
+}
 
-export function watchEditor(subscriptions, editor) {
+export function watchEditor(subscriptions, editor, forceAttach) {
   const isNew = !editors.has(editor)
   debug('watchEditor', isNew)
 
@@ -129,10 +152,12 @@ export function watchEditor(subscriptions, editor) {
   // if editor is already known: ensure the current cache item is
   // attached to this editor
   if (!isNew) {
-    const path = editor.getPath()
-    const item = data.get(path)
-    if (!item || item.editor !== editor) {
-      refreshItem()
+    if (forceAttach) {
+      const path = editor.getPath()
+      const item = data.get(path)
+      if (!item || item.editor !== editor) {
+        refreshItem()
+      }
     }
     return
   }
@@ -153,6 +178,8 @@ export function watchEditor(subscriptions, editor) {
   disposable.add(
     editor.onDidDestroy(() => {
       editors.delete(editor)
+      // detach
+      detachEditor(editor)
       // cleanup
       disposable.dispose()
       subscriptions.remove(disposable)
@@ -163,10 +190,28 @@ export function watchEditor(subscriptions, editor) {
   subscriptions.add(disposable)
 }
 
+// ensures a destroyed editor is not used as a (scope + code) reference
+// for a cache item
+function detachEditor(editor) {
+  const path = editor.getPath()
+  const item = data.get(editor.getPath())
+  if (item && item.editor === editor) {
+    data.delete(path)
+  }
+}
+
+const createDetachedItem = path =>
+  new CacheItem({
+    scope: getFileScope(path),
+    getCode: () => (fs.existsSync(path) && fs.readFileSync(path, 'utf8')) || '',
+  })
+
 export function get(path) {
   if (data.has(path)) {
     return data.get(path)
   } else {
-    debugger
+    const item = createDetachedItem(path)
+    data.set(path, item)
+    return item
   }
 }

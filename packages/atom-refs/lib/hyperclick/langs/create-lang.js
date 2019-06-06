@@ -10,12 +10,14 @@ export default ({ scopes, parseAst, parseInfo, findReferences }) => {
         return { type: 'parse-error', parseError, lang: 'svelte' }
       }
       const locator = createLocator(code)
-      const { getPos } = locator
+      const { getPos, getPoint } = locator
       const findReferencesAt = pos => findReferences(ast, pos, { locator })
       try {
         return {
           ...parseInfo(ast),
           getPos,
+          pointToPos: getPos,
+          posToPoint: getPoint,
           findReferencesAt,
         }
       } catch (parseError) {

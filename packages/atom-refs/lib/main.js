@@ -127,6 +127,10 @@ export const activate = () => {
     }
   }
 
+  const onTextEditor = editor => {
+    cache.watchEditor(subscriptions, editor)
+  }
+
   const onActiveTextEditor = editor => {
     state.ast = null
     const { disposable } = state
@@ -153,7 +157,7 @@ export const activate = () => {
     }
 
     if (editor) {
-      cache.watchEditor(subscriptions, editor)
+      cache.attachEditor(subscriptions, editor)
     }
   }
 
@@ -179,7 +183,10 @@ export const activate = () => {
     }
   }
 
-  subscriptions.add(atom.workspace.observeActiveTextEditor(onActiveTextEditor))
+  subscriptions.add(
+    atom.workspace.observeTextEditors(onTextEditor),
+    atom.workspace.observeActiveTextEditor(onActiveTextEditor)
+  )
 
   Object.entries(commands).forEach(([name, handler]) => {
     const scope = handler.scope || 'atom-workspace'
