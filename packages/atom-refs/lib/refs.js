@@ -6,7 +6,7 @@ const debug = Debug('refs')
 
 // `this` bound to cache entry item
 export function parseRefsContext(refsModule, code) {
-  debug('parseRefsContext', code)
+  debug('parseRefsContext')
 
   const scopeName = this.getScope()
 
@@ -16,7 +16,7 @@ export function parseRefsContext(refsModule, code) {
   }
 
   // { ast, parseError }
-  const parsed = refsModule.parse({ code, scopeName })
+  const { error: parseError, ...parsed } = refsModule.parse({ code, scopeName })
 
   const locator = parsed.locator || this.getLocator()
 
@@ -27,6 +27,7 @@ export function parseRefsContext(refsModule, code) {
 
   return {
     ...parsed,
+    parseError,
     locator,
     pointToPos: locator.getPos,
     posToPoint: locator.getPoint,

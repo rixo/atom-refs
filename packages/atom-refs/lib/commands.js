@@ -1,26 +1,13 @@
 'use babel'
 
-// const getVimMode = (vim, editor) => {
-//   const state = vim.getEditorState(editor)
-//   if (state) {
-//     const { mode, submode } = state
-//     return [mode, submode]
-//   }
-// }
-//
-// const setVimMode = (vimService, editor, [mode, submode]) => {
-//   const state = vimService.getEditorState(editor)
-//   if (state) {
-//     state.activate(mode, submode)
-//   }
-// }
+import jumpCommands from './hyperclick/commands'
 
 const select = state => () => {
   const { editor, ranges, vim } = state
   if (!editor || !ranges) {
     return
   }
-  if (vim) {
+  if (vim && atom.config.get('atom-refs.preferVimSelection')) {
     const editorState = vim.getEditorState(editor)
     const pm = editorState && editorState.persistentSelection
     pm.clearMarkers()
@@ -105,4 +92,5 @@ export default {
   select,
   next,
   previous,
+  ...jumpCommands,
 }

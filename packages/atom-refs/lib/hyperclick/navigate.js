@@ -30,7 +30,7 @@ function goToBinding(editor, point) {
 
 function goToFinalDestination(editor, { filename, destination }) {
   const options = {
-    // TODO package
+    // this one option is global: do not use jump's options
     pending: atom.config.get('atom-refs.usePendingPanes'),
   }
   atom.workspace.open(filename, options).then(editor => {
@@ -68,8 +68,8 @@ function resolveExportPosition(path, imported) {
   return position
 }
 
-function resolveNextJump(jump) {
-  const { filename: fromFile } = jump
+function resolveNextJump(fromJump) {
+  const { filename: fromFile } = fromJump
   // TODO wtf is all this?
   let blockNotFoundWarning = false
 
@@ -83,13 +83,12 @@ function resolveNextJump(jump) {
   const requireIfTrusted = makeRequire(fallback)
 
   const resolveOptions = {
-    // FIXME NOT our config
     extensions: atom.config.get('atom-refs.extensions'),
     requireIfTrusted,
   }
 
   // resolveModule only use {moduleName} from suggestion
-  const resolved = resolveModule(fromFile, jump, resolveOptions)
+  const resolved = resolveModule(fromFile, fromJump, resolveOptions)
 
   if (blockNotFoundWarning) {
     // Do nothing
@@ -113,32 +112,36 @@ function resolveNextJump(jump) {
   let filename = resolved.filename
 
   if (filename == null) {
-    const detail = `module ${jump.moduleName} was not found`
+    const detail = `module ${fromJump.moduleName} was not found`
     atom.notifications.addWarning('atom-refs', { detail })
-    return
+    return null
   }
 
   if (fs.existsSync(filename)) {
     filename = fs.realpathSync(filename)
   }
 
-  const position = resolveExportPosition(filename, jump.imported)
+  const options = fromJump.options
+  const position = resolveExportPosition(filename, fromJump.imported)
+
   if (position) {
-    const nextJump = resolveAutoJump(filename, position)
+    const nextJump = resolveAutoJump(filename, position, options)
     if (nextJump) {
       nextJump.filename = filename
       return nextJump
     } else {
-      return { filename, destination: position }
+      return { filename, destination: position, options }
     }
   } else {
-    return { filename }
+    return { filename, options }
   }
 }
 
-function resolveAutoJump(path, fromPoint) {
-  // TODO config package
-  if (!atom.config.get('atom-refs.skipIntermediate')) {
+function resolveAutoJump(path, fromPoint, options) {
+  const { jumpToImport, skipIntermediate } = options
+
+  // guard: auto jump (out of file) disabled
+  if (!skipIntermediate) {
     return
   }
 
@@ -149,16 +152,12 @@ function resolveAutoJump(path, fromPoint) {
   }
 
   const info = getEntry(path).getJumpContext()
-  const nextJump = buildJump(info, fromPoint)
+  const nextJump = buildJump(info, fromPoint, options)
 
   if (!nextJump) {
     return
   }
-  if (
-    nextJump.type === 'from-import' &&
-    // TODO config package
-    atom.config.get('atom-refs.jumpToImport')
-  ) {
+  if (nextJump.type === 'from-import' && jumpToImport) {
     return
   }
 

@@ -3,8 +3,6 @@
 const isDeclaration = ({ type }) =>
   type === 'decl' || type === 'namimp' || type === 'defimp'
 
-const isCrossFiles = () => !atom.config.get('atom-refs.jumpToImport')
-
 export default function buildJump(
   {
     parseError,
@@ -14,12 +12,12 @@ export default function buildJump(
     findReferencesAt,
     getPos,
   },
-  point
+  point,
+  options = atom.config.get('atom-refs')
 ) {
+  const { jumpToImport } = options
   if (parseError) {
     throw new Error('Previous parse error: ' + parseError.stack || parseError)
-    // atom.notifications.addWarning('atom-refs', { detail: String(parseError) })
-    // return
   }
   if (unsupportedScope) {
     throw new Error('Unsupported scope: ' + unsupportedScope)
@@ -49,6 +47,7 @@ export default function buildJump(
           moduleName: path.moduleName,
           bindingStart: path.range.start,
           bindingEnd: path.range.end,
+          options,
         }
       }
       return {
@@ -56,6 +55,7 @@ export default function buildJump(
         imported: path.imported,
         moduleName: path.moduleName,
         range: path.range,
+        options,
       }
     }
   }
@@ -70,7 +70,9 @@ export default function buildJump(
 
   const clickedDeclaration = inAtomRange(declaration)
 
-  if (clickedDeclaration || isCrossFiles()) {
+  const isCrossFiles = !jumpToImport
+
+  if (clickedDeclaration || isCrossFiles) {
     const bindingStart = getPos(declaration.start)
     const bindingEnd = getPos(declaration.end)
     const bindingName = declaration.identifier.name
@@ -84,11 +86,12 @@ export default function buildJump(
         moduleName: targetModule.moduleName,
         bindingStart,
         bindingEnd,
+        options,
       }
     }
   }
 
-  // Exit condition for jump => autoJump loop
+  // Exit condition for jump => auto jump loop
   if (clickedDeclaration) {
     return null
   }
@@ -103,5 +106,6 @@ export default function buildJump(
   return {
     type: 'binding',
     destination,
+    options,
   }
 }
