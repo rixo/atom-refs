@@ -8,7 +8,7 @@
   },
   "description": "Navigate and refactor references",
   "keywords": [],
-  "repository": "https://github.com/rixo/atom-references",
+  "repository": "https://github.com/rixo/atom-refs",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
