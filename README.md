@@ -2,7 +2,7 @@
 
 This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyperclick]. Big thanks to them.
 
-**This is very early alpha version.**
+**WARNING This is very early alpha version.** Expect bugs.
 
 # Motivations
 
@@ -42,7 +42,7 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 
 - does NOT support typescript because typescript has all these features more or less built-in
 
-[atom-refactor]:
-[js-refactor]:
-[js-hyperclick]:
-[hyperclick]:
+[atom-refactor]: https://atom.io/packages/refactor
+[js-refactor]: https://atom.io/packages/js-refactor
+[js-hyperclick]: https://atom.io/packages/js-hyperclick
+[hyperclick]: https://atom.io/packages/hyperclick
