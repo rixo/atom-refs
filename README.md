@@ -1,6 +1,6 @@
 # atom-refs
 
-This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyperclick]. Big thanks to them.
+This project recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyperclick]. Big thanks to them.
 
 **WARNING This is very early alpha version.** Expect bugs.
 
@@ -22,13 +22,13 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 
 - navigate to previous / next reference
 
-- jump to variable declaration / import declaration
+- jump to variable declaration / import statement
 
 - jump through files to imported module
 
     - either from local import declaration, or a reference later in the code
 
-    - to local modules
+    - to `./local-module`, 'global-ones' and even atom's doc! (actually using js-hyperclick for module resolution currently)
 
 - skip through `import { default as foo } from 'foo'` to the actual declaration (optionally, by using one of two jump command variants)
 
@@ -38,7 +38,7 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 
 - supports jsx
 
-- maybe supports vue? (don't remember)
+- maybe supports vue? (don't remember, not tested recently, probably somewhat partial support)
 
 - does NOT support typescript because typescript has all these features more or less built-in
 
@@ -46,3 +46,7 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 [js-refactor]: https://atom.io/packages/js-refactor
 [js-hyperclick]: https://atom.io/packages/js-hyperclick
 [hyperclick]: https://atom.io/packages/hyperclick
+
+## Keymap
+
+Provided keymap works with vim-mode-plus because it's what I use. You'll need to map atom-refs's command yourself if not using vim-mode-plus. (Please post an issue if you find a combination that works well in non-vim, to have it integrated in the defaults).

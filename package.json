@@ -6,7 +6,7 @@
     "name": "rixo",
     "email": "rixo@rixo.fr"
   },
-  "description": "Navigate and refactor references",
+  "description": "Navigate and refactor variable references",
   "keywords": [],
   "repository": "https://github.com/rixo/atom-refs",
   "license": "MIT",
