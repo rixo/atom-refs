@@ -257,13 +257,13 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
   return pass
 }
 
-export const FindsRefsTest = ({ parse, findReferences }) => {
-  const describeRefs = (title, cursor = '§', dc = describe) => (
+export const FindsRefsTest = ({ parse, findReferences, cursor = '§' }) => {
+  const describeRefs = (title, cur = cursor, dc = describe) => (
     parts,
     ...descs
   ) => {
     dc(title, () => {
-      const regex = new RegExp(`_([^_]*${cursor}[^_]*)_`, 'g')
+      const regex = new RegExp(`_([^_]*${cur}[^_]*)_`, 'g')
       let code = dedent(parts.join(''))
       const assertions = []
       let expected = []
@@ -277,14 +277,14 @@ export const FindsRefsTest = ({ parse, findReferences }) => {
             const descSpec = descs[assertions.length]
             const desc = descSpec ? `finds ${descSpec}` : String(i++)
             const offset = originalOffset - pullLeft
-            const nameOffset = spec.indexOf(cursor)
+            const nameOffset = spec.indexOf(cur)
             if (~nameOffset) {
               assertions.push({
-                loc: offset + spec.indexOf(cursor),
+                loc: offset + spec.indexOf(cur),
                 desc,
               })
             }
-            const name = spec.replace(cursor, '')
+            const name = spec.replace(cur, '')
             const from = offset
             const to = offset + name.length
             const typeMatch =
