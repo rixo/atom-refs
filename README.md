@@ -4,7 +4,7 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 
 **WARNING This is very early alpha version.** Expect bugs.
 
-# Motivations
+## Motivations
 
 - add navigation between occurrences
 
@@ -14,7 +14,7 @@ This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hy
 
 - share AST to avoid double parsing
 
-# Features
+## Features
 
 - highlights all references (bindings) to a variables in a JS scope
 
