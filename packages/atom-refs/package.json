@@ -1,14 +1,14 @@
 {
   "name": "atom-refs",
   "main": "./lib/main",
-  "version": "0.0.0",
+  "version": "0.1.2",
   "author": {
     "name": "rixo",
     "email": "rixo@rixo.fr"
   },
   "description": "Navigate and refactor references",
   "keywords": [],
-  "repository": "https://github.com/rixo/atom-references",
+  "repository": "https://github.com/rixo/atom-refs",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
@@ -48,11 +48,12 @@
   "dependencies": {
     "@babel/core": "^7.4.5",
     "@babel/parser": "^7.4.4",
-    "atom-refs-escope": "file:../escope",
+    "atom-refs-escope": "0.0.4",
     "babel-traverse": "^6.26.0",
     "babel-types": "^6.26.0",
     "babylon": "^6.18.0",
     "debug": "^3.1.0",
+    "dedent": "^0.7.0",
     "js-hyperclick": "github:AsaAyers/js-hyperclick#v1.18.0",
     "php-parser": "^3.0.0-alpha2",
     "shell": "^0.5.0",
@@ -63,7 +64,6 @@
   },
   "devDependencies": {
     "@rixo/eslint-config-atom": "^0.5.0",
-    "dedent": "^0.7.0",
     "eslint-plugin-disable": "^1.0.4"
   }
 }
