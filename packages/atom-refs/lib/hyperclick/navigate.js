@@ -4,11 +4,10 @@ import fs from 'fs'
 import shell from 'shell'
 
 import buildJump from './build-jump'
-import { requireJSH } from './util'
 import { getEntry } from '../cache'
 
-const resolveModule = requireJSH('/lib/core/resolve-module')
-const makeRequire = requireJSH('/lib/require-if-trusted')
+import resolveModule from 'js-hyperclick/lib/core/resolve-module'
+import makeRequire from 'js-hyperclick/lib/require-if-trusted'
 
 let autoJumpCounter = 0
 

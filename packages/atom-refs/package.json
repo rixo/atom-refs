@@ -53,6 +53,7 @@
     "babel-types": "^6.26.0",
     "babylon": "^6.18.0",
     "debug": "^3.1.0",
+    "js-hyperclick": "github:AsaAyers/js-hyperclick#v1.18.0",
     "php-parser": "^3.0.0-alpha2",
     "shell": "^0.5.0",
     "svelte": "^3.4.1",
