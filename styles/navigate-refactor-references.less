@@ -7,7 +7,7 @@
 
 atom-text-editor.editor {
 
-  .refactor-reference {
+  .atom-refs-reference {
     .region {
       border-radius: 2px;
       box-sizing: border-box;
@@ -16,18 +16,18 @@ atom-text-editor.editor {
     }
   }
 
-  .refactor-region(@color) {
+  .atom-refs-region(@color) {
     box-shadow: inset 0 0 4px 0px fadeout(@color, 0%);
     border: 1px solid fadeout(@color, 10%);
     background-color: fadeout(@color, 80%);
     opacity: .66;
   }
 
-  @refactor-region: #246AE2;
-  @refactor-region-decl: #F9812B;
-  @refactor-region-mut: #E6404B;
-  @refactor-region-ref: #22911B;
-  .refactor-ref, .refactor-mut, .refactor-decl {
+  @atom-refs-region: #246AE2;
+  @atom-refs-region-decl: #F9812B;
+  @atom-refs-region-mut: #E6404B;
+  @atom-refs-region-ref: #22911B;
+  .atom-refs-ref, .atom-refs-mut, .atom-refs-decl {
     .region {
       &:before {
         content: "";
@@ -39,32 +39,32 @@ atom-text-editor.editor {
         box-sizing: content-box;
         padding: 0 1px;
         border-radius: 1.5px;
-        .refactor-region(@refactor-region);
+        .atom-refs-region(@atom-refs-region);
       }
     }
   }
-  // .refactor-ref .region {
+  // .atom-refs-ref .region {
   //   border-bottom: 1px solid green;
   // }
-  .refactor-ref .region {
+  .atom-refs-ref .region {
     &:before {
-      .refactor-region(@refactor-region-ref);
+      .atom-refs-region(@atom-refs-region-ref);
     }
   }
-  .refactor-decl .region,
-  .refactor-mut .region {
+  .atom-refs-decl .region,
+  .atom-refs-mut .region {
     &:before {
-      .refactor-region(@refactor-region-mut);
+      .atom-refs-region(@atom-refs-region-mut);
     }
   }
-  .refactor-decl .region {
+  .atom-refs-decl .region {
     &:before {
-      .refactor-region(@refactor-region-decl);
-      box-shadow: inset 0 0 4px 1px @refactor-region-decl;
+      .atom-refs-region(@atom-refs-region-decl);
+      box-shadow: inset 0 0 4px 1px @atom-refs-region-decl;
     }
   }
 
-  .refactor-error {
+  .atom-refs-error {
     .region {
       box-sizing: border-box;
       border-bottom: 1px dotted rgba(255, 0, 0, 1);
@@ -72,7 +72,7 @@ atom-text-editor.editor {
   }
 
   .gutter {
-    .line-number.refactor-error {
+    .line-number.atom-refs-error {
       .icon-right {
         visibility: visible;
         &:before {
@@ -83,4 +83,60 @@ atom-text-editor.editor {
     }
   }
 
+}
+// This override should probably be moved to package occurrences
+atom-text-editor.editor {
+  .atom-refs-region(@color) {
+    background: blue;
+    box-shadow: none;
+    border: none;
+    box-shadow: inset 0 0 4px 0px fadeout(@color, 0%);
+    // border: 1px solid fadeout(@color, 10%);
+    background-color: fadeout(@color, 60%);
+    // background-color: lighten(@color, 5%);
+    // background-color: saturate(lighten(@color, 5%), 10%);
+    // background-color: @color;
+    opacity: 0.5;
+  }
+  @atom-refs-region: #246ae2;
+  @atom-refs-region-decl: #f9812b;
+  @atom-refs-region-decl: @atom-refs-region;
+  // @atom-refs-region-decl: #F9D42B;
+  @atom-refs-region-mut: #e6404b;
+  @atom-refs-region-ref: #22911b;
+  .atom-refs-ref.theme-quiet,
+  .atom-refs-mut.theme-quiet,
+  .atom-refs-decl.theme-quiet {
+    .region {
+      &:before {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 100%;
+        height: calc(100%-4px);
+        left: -1px;
+        box-sizing: content-box;
+        padding: 0 1px;
+        border-radius: 1.5px;
+        .atom-refs-region(@atom-refs-region);
+      }
+    }
+  }
+  .atom-refs-ref.theme-quite .region {
+    &:before {
+      .atom-refs-region(@atom-refs-region-ref);
+    }
+  }
+  .atom-refs-decl.theme-quite .region,
+  .atom-refs-mut.theme-quite .region {
+    &:before {
+      .atom-refs-region(@atom-refs-region-mut);
+    }
+  }
+  .atom-refs-decl.theme-quite .region {
+    &:before {
+      .atom-refs-region(@atom-refs-region-decl);
+      box-shadow: inset 0 0 4px 1px @atom-refs-region-decl;
+    }
+  }
 }
