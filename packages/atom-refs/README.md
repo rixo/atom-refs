@@ -2,6 +2,8 @@
 
 This projects recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyperclick]. Big thanks to them.
 
+**This is very early alpha version.**
+
 # Motivations
 
 - add navigation between occurrences
