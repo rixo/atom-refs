@@ -1,2 +1,5 @@
 extends:
   - '@rixo/atom'
+
+plugins:
+  - disable
