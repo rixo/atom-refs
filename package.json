@@ -1,7 +1,7 @@
 {
   "name": "atom-refs",
   "main": "./lib/main",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "author": {
     "name": "rixo",
     "email": "rixo@rixo.fr"
