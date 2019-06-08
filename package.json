@@ -40,6 +40,16 @@
       "versions": {
         "2.0.0": "consumeIndie"
       }
+    },
+    "definitions": {
+      "versions": {
+        "0.1.0": "consumeDefinitions"
+      }
+    },
+    "find-references": {
+      "versions": {
+        "0.1.0": "consumeFindReferences"
+      }
     }
   },
   "scripts": {
