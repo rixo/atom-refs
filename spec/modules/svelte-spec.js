@@ -80,7 +80,7 @@ describe('modules/svelte', () => {
     })
   })
 
-  fdescribe('findReferences(ast, loc)', () => {
+  describe('findReferences(ast, loc)', () => {
     const addRangeMatchers = createAddRangeMatchers({ human: false })
     beforeEach(addRangeMatchers)
 
@@ -505,6 +505,13 @@ describe('modules/svelte', () => {
     describeRefs('arrow function argument')`
       <script>
         [].filter(_f§oo_ ${'decl: argument'} => console.log(_f§oo_ ${'ref:'}))
+      </script>
+    `
+
+    describeRefs('svelte:component this')`
+      <svelte:component this={_F§oo_} />
+      <script>
+        import _Fo§o_ from './foo'
       </script>
     `
   })
