@@ -509,10 +509,33 @@ describe('modules/svelte', () => {
     `
 
     describeRefs('svelte:component this')`
-      <svelte:component this={_F§oo_} />
+      <svelte:component this={_F§oo_} /> ${'ref: directive'}
       <script>
-        import _Fo§o_ from './foo'
+        import _Fo§o_ from './foo' ${'defimp: import'}
       </script>
+    `
+
+    describeRefs('store auto subscriptions')`
+      <script>
+        import _fo§o_ from './foo' ${'defimp:'}
+        console.log($_f§oo_) ${'ref: prefixed in script'}
+        console.log(_f§oo_) ${'ref: not prefixed in script'}
+      </script>
+      {$_fo$o_} ${'ref: prefixed in template'}
+      {_fo$o_} ${'ref: not prefixed in template'}
+    `
+
+    // spec: we want to keep the range _after_ the $ to enable rename
+    //
+    // current test DSL does not allow that
+    xdescribeRefs('store auto subscriptions from $ prefix')`
+      <script>
+        import _fo§o_ from './foo' ${'defimp:'}
+        console.log(§$_foo_) ${'ref: prefixed in script'}
+        console.log(_f§oo_) ${'ref: not prefixed in script'}
+      </script>
+      {$_foo_} ${'ref: prefixed in template'}
+      {_fo$o_} ${'ref: not prefixed in template'}
     `
   })
 })
