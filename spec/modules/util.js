@@ -242,8 +242,8 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
 
   if (remainingActuals.length > 0) {
     pass = false
-    remainingActuals.forEach(({ start, end }) => {
-      actualSpec.mark('✚', locator.getLoc(start))
+    remainingActuals.forEach(({ start, end, type }) => {
+      actualSpec.mark(`✚${type}:`, locator.getLoc(start))
       actualSpec.mark('✚', locator.getLoc(end))
     })
   }
