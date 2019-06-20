@@ -7,7 +7,7 @@
     "ctrl-r": "atom-refs:select"
   },
   "atom-text-editor.vim-mode-plus:not(.insert-mode)": {
-    "g d": "atom-refs:jump-to-local",
-    "g D": "atom-refs:jump-to-final"
+    "g d": "atom-refs:jump-to-local-definition",
+    "g D": "atom-refs:jump-to-final-definition"
   }
 }
