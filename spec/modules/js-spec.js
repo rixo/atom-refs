@@ -128,8 +128,8 @@ describe('modules/js findReferences(ast, loc)', () => {
     `
     // this case was not broken, but it worths a quick little test
     describeRefs('b->a')`
-      handler = 1 ${'mut:'}
-      o.hand§ler = 2 // must NOT match this one
+      handler = 1
+      o.hand§ler = 2 ${'not from object property'}
     `
   })
 })
