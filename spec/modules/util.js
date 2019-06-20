@@ -263,7 +263,7 @@ export const FindsRefsTest = ({ parse, findReferences, cursor = '§' }) => {
     ...descs
   ) => {
     dc(title, () => {
-      const regex = new RegExp(`_([^_]*${cur}[^_]*)_`, 'g')
+      const regex = new RegExp(`_([^_]*${cur}[^_]*)_|${cur}`, 'g')
       let code = dedent(parts.join(''))
       const assertions = []
       let expected = []
@@ -274,9 +274,17 @@ export const FindsRefsTest = ({ parse, findReferences, cursor = '§' }) => {
           // /_([^_]*|[^_]*)_/g,
           regex,
           (match, spec, originalOffset) => {
+            const offset = originalOffset - pullLeft
             const descSpec = descs[assertions.length]
             const desc = descSpec ? `finds ${descSpec}` : String(i++)
-            const offset = originalOffset - pullLeft
+            if (match === cur) {
+              pullLeft += match.length
+              assertions.push({
+                loc: offset,
+                desc,
+              })
+              return ''
+            }
             const nameOffset = spec.indexOf(cur)
             if (~nameOffset) {
               assertions.push({
