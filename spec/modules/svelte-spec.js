@@ -537,5 +537,21 @@ describe('modules/svelte', () => {
       {$_foo_} ${'ref: prefixed in template'}
       {_fo$o_} ${'ref: not prefixed in template'}
     `
+
+    // this was discovered in JS, not Svelte, but worths guarding against
+    describe('bug: globals match object properties', () => {
+      describeRefs('a->b')`
+        <script>
+          _handl§er_ = 1 ${'mut:'}
+          o.handler = 2 // must NOT match this one
+        </script>
+      `
+      describeRefs('b->a')`
+        <script>
+          handler = 1 ${'mut:'}
+          o.hand§ler = 2 // must NOT match this one
+        </script>
+      `
+    })
   })
 })
