@@ -120,4 +120,16 @@ describe('modules/js findReferences(ast, loc)', () => {
     const { extensions = defaultExtensions, _req§uireIfTrusted_ } = options
     const customResolver = _requireIf§Trusted_(resolver)
   `
+
+  describe('bug: globals match object properties', () => {
+    describeRefs('a->b')`
+      _handl§er_ = 1 ${'mut:'}
+      o.handler = 2 // must NOT match this one
+    `
+    // this case was not broken, but it worths a quick little test
+    describeRefs('b->a')`
+      handler = 1 ${'mut:'}
+      o.hand§ler = 2 // must NOT match this one
+    `
+  })
 })
