@@ -12,7 +12,7 @@ This project recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyp
 
 - avoid to open temporary editors when resolving re-exported modules (`export { ... } from`)
 
-- share AST to avoid double parsing
+- share AST to avoid double parsing of same code
 
 ## Features
 
@@ -24,15 +24,15 @@ This project recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyp
 
 - jump to variable declaration / import statement
 
-- jump through files to imported module
+- jump through files to imported module definition
 
     - either from local import declaration, or a reference later in the code
 
-    - to `./local-module`, 'global-ones' and even atom's doc! (actually using js-hyperclick for module resolution currently)
+    - to `./local-module`, `'global-ones'` and even atom's doc! (actually using js-hyperclick for module resolution currently)
 
 - skip through `import { default as foo } from 'foo'` to the actual declaration (optionally, by using one of two jump command variants)
 
-- can provides to [hyperclick] for mouse support (but does not depends on it)
+- can provide to [hyperclick] for mouse support (but does not depends on it)
 
 - supports svelte3! including references in the template!!
 
@@ -40,7 +40,7 @@ This project recomposes big parts of [atom-refactor] / [js-refactor] and [js-hyp
 
 - maybe supports vue? (don't remember, not tested recently, probably somewhat partial support)
 
-- does NOT support typescript because typescript has all these features more or less built-in
+- does NOT support typescript (because typescript has all of this more or less built-in)
 
 [atom-refactor]: https://atom.io/packages/refactor
 [js-refactor]: https://atom.io/packages/js-refactor
