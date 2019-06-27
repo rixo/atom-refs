@@ -132,4 +132,10 @@ describe('modules/js findReferences(ast, loc)', () => {
       o.hand§ler = 2 ${'not from object property'}
     `
   })
+
+  describeRefs('bug: computed object properties')`
+    const _f§oo_ = 1
+    const o = {}
+    o[_fo§o_] = 2
+  `
 })
