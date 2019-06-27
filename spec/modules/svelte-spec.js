@@ -185,7 +185,7 @@ describe('modules/svelte', () => {
 
     describeRefs('does not find shadowed variable in function')`
       <script>
-        const _foo_ = 'foo'
+        const _f§oo_ = 'foo'
         (function() {
           let foo = 'bar'
           console.log(foo)
@@ -196,7 +196,7 @@ describe('modules/svelte', () => {
 
     describeRefs('does not find shadowed variable in block scope')`
       <script>
-        const _foo_ = 'foo'
+        const _fo§o_ = 'foo'
         {
           let foo = 'bar'
           console.log(foo)
@@ -515,28 +515,45 @@ describe('modules/svelte', () => {
       </script>
     `
 
-    describeRefs('store auto subscriptions')`
-      <script>
-        import _fo§o_ from './foo' ${'defimp:'}
-        console.log($_f§oo_) ${'ref: prefixed in script'}
-        console.log(_f§oo_) ${'ref: not prefixed in script'}
-      </script>
-      {$_fo$o_} ${'ref: prefixed in template'}
-      {_fo$o_} ${'ref: not prefixed in template'}
-    `
+    describe('store auto subscriptions', () => {
+      describeRefs('from default import')`
+        <script>
+          import _fo§o_ from './foo' ${'defimp:'}
+          console.log($_f§oo_) ${'ref: prefixed in script'}
+          console.log(_f§oo_) ${'ref: not prefixed in script'}
+        </script>
+        {$_fo$o_} ${'ref: prefixed in template'}
+        {_fo$o_} ${'ref: not prefixed in template'}
+      `
 
-    // spec: we want to keep the range _after_ the $ to enable rename
-    //
-    // current test DSL does not allow that
-    xdescribeRefs('store auto subscriptions from $ prefix')`
-      <script>
-        import _fo§o_ from './foo' ${'defimp:'}
-        console.log(§$_foo_) ${'ref: prefixed in script'}
-        console.log(_f§oo_) ${'ref: not prefixed in script'}
-      </script>
-      {$_foo_} ${'ref: prefixed in template'}
-      {_fo$o_} ${'ref: not prefixed in template'}
-    `
+      // spec: we want to keep the range _after_ the $ to enable rename
+      //
+      // but current test DSL does not allow that...
+      //
+      xdescribeRefs('from $ prefix, from default import')`
+        <script>
+          import _fo§o_ from './foo' ${'defimp:'}
+          console.log(§$_foo_) ${'ref: prefixed in script'}
+          console.log(_f§oo_) ${'ref: not prefixed in script'}
+        </script>
+        {$_foo_} ${'ref: prefixed in template'}
+        {_fo$o_} ${'ref: not prefixed in template'}
+      `
+
+      describeRefs('from named import')`
+        <script>
+          import { _myP§arams_ } from './stores' ${'namimp: from import'}
+          const arrowFnReturningObj = () => ({
+            params: $_myPa§rams_, ${'ref: from object returning arrow function'}
+          })
+          const arrowFnWithBody = () => {
+            console.log({
+              params: $_myPa§rams_, ${"ref: from nested function's body"}
+            })
+          }
+        </script>
+      `
+    })
 
     // this was discovered in JS, not Svelte, but worths guarding against
     describe('bug: globals match object properties', () => {
@@ -555,10 +572,10 @@ describe('modules/svelte', () => {
     })
 
     describeRefs('use: action')`
-      <div use:_stic§ky_ /> ${'from directive'}
       <script>
-        import {_st§icky_} from './actions' ${'from import'}
+        import {_st§icky_} from './actions' ${'namimp: from import'}
       </script>
+      <div use:_stic§ky_ /> ${'ref: from directive'}
     `
   })
 })
