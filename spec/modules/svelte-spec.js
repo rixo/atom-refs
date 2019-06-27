@@ -553,5 +553,12 @@ describe('modules/svelte', () => {
         </script>
       `
     })
+
+    describeRefs('use: action')`
+      <div use:_stic§ky_ /> ${'from directive'}
+      <script>
+        import {_st§icky_} from './actions' ${'from import'}
+      </script>
+    `
   })
 })
