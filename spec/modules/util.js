@@ -257,13 +257,27 @@ function toMatchRanges(expected, code, cursorLoc, locator) {
   return pass
 }
 
-export const FindsRefsTest = ({ parse, findReferences, cursor = '§' }) => {
+const autoCursor = parts => {
+  const hasOnlyPipes = parts.every(part => !part.includes('§'))
+  if (hasOnlyPipes) {
+    return '|'
+  } else {
+    return '§'
+  }
+}
+
+// cursor: null -> smart cursor: if only pipes |, use | else use §. Allows to
+// use pipes in most case (more legible), but fallback on § when needed.
+export const FindsRefsTest = ({ parse, findReferences, cursor = null }) => {
   const describeRefs = (title, cur = cursor, dc = describe) => (
     parts,
     ...descs
   ) => {
+    if (cur === null) {
+      cur = autoCursor(parts)
+    }
     dc(title, () => {
-      const regex = new RegExp(`_([^_]*${cur}[^_]*)_|${cur}`, 'g')
+      const regex = new RegExp(`_([^_]*${'\\' + cur}[^_]*)_|${'\\' + cur}`, 'g')
       let code = dedent(parts.join(''))
       const assertions = []
       let expected = []
