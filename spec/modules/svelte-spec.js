@@ -542,16 +542,52 @@ describe('modules/svelte', () => {
 
       describeRefs('from named import')`
         <script>
-          import { _myP§arams_ } from './stores' ${'namimp: from import'}
+          import { _myP|arams_ } from './stores' ${'namimp: from import'}
           const arrowFnReturningObj = () => ({
-            params: $_myPa§rams_, ${'ref: from object returning arrow function'}
+            params: $_myPa|rams_, ${'ref: from object returning arrow function'}
           })
           const arrowFnWithBody = () => {
             console.log({
-              params: $_myPa§rams_, ${"ref: from nested function's body"}
+              params: $_myPa|rams_, ${"ref: from nested function's body"}
             })
           }
         </script>
+        {$_myPa|rams_} ${'ref: prefixed in template'}
+        {_myPara|ms_} ${'ref: not prefixed in template'}
+      `
+
+      describe('from const object', () => {
+        describeRefs('finds function arguments')`
+          <script>
+            const _myP|arams_ = { subscribe: () => () => {} } ${'decl:'}
+            console.log($_m|yParams_) ${'ref: passed as argument'}
+          </script>
+        `
+
+        describeRefs('finds assignment to store sub')`
+          <script>
+            const _myP|arams_ = { subscribe: () => () => {} } ${'decl:'}
+            $_m|yParams_ = 42
+          </script>
+        `
+      })
+
+      describeRefs('from const object')`
+        <script>
+          const _myP|arams_ = { subscribe: () => () => {} } ${'decl:'}
+          console.log($_m|yParams_) ${'ref: passed as argument'}
+          $_my|Params_ = 42 ${'mut: assignment to store subscription'}
+          const arrowFnReturningObj = () => ({
+            params: $_myPa|rams_, ${'ref: from object returning arrow function'}
+          })
+          const arrowFnWithBody = () => {
+            console.log({
+              params: $_myPa|rams_, ${"ref: from nested function's body"}
+            })
+          }
+        </script>
+        {$_myPa|rams_} ${'ref: prefixed in template'}
+        {_myPara|ms_} ${'ref: not prefixed in template'}
       `
     })
 
@@ -559,14 +595,14 @@ describe('modules/svelte', () => {
     describe('bug: globals match object properties', () => {
       describeRefs('a->b')`
         <script>
-          _handl§er_ = 1 ${'mut:'}
+          _handl|er_ = 1 ${'mut:'}
           o.handler = 2 // must NOT match this one
         </script>
       `
       describeRefs('b->a')`
         <script>
           handler = 1
-          o.hand§ler = 2 ${'not from object property'}
+          o.hand|ler = 2 ${'not from object property'}
         </script>
       `
     })
