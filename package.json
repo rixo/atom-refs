@@ -58,7 +58,8 @@
     }
   },
   "scripts": {
-    "prettier": "prettier --write lib/**/*.js"
+    "prettier": "prettier --write lib/**/*.js",
+    "test": "atom --test spec"
   },
   "dependencies": {
     "@babel/core": "^7.4.5",
