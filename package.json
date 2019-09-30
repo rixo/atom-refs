@@ -62,10 +62,8 @@
   },
   "dependencies": {
     "@babel/core": "^7.4.5",
-    "@babel/parser": "^7.4.4",
-    "babel-traverse": "^6.26.0",
-    "babel-types": "^6.26.0",
-    "babylon": "^6.18.0",
+    "@babel/parser": "^7.6.2",
+    "@babel/traverse": "^7.6.2",
     "debug": "^3.1.0",
     "dedent": "^0.7.0",
     "escope": "^3.6.0",
