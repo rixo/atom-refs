@@ -68,6 +68,7 @@
     "debug": "^3.1.0",
     "dedent": "^0.7.0",
     "escope": "^3.6.0",
+    "eslint-utils": "^1.4.2",
     "js-hyperclick": "github:AsaAyers/js-hyperclick#v1.18.0",
     "lodash": "^4.17.15",
     "php-parser": "^3.0.0-alpha2",
