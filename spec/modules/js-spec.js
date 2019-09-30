@@ -76,6 +76,19 @@ describe('modules/js findReferences(ast, loc)', () => {
     }
   `
 
+  describeRefs('class refs')`
+    class _Fo§o_ {} ${'decl: from class declaration'}
+    _Fo§o_ = null ${'mut: from mutation'}
+  `
+
+  describeRefs('refs inside class body')`
+    class Header extends React.Component {
+      constructor(_p§rops_) { ${'decl:'}
+        console.log(_prop§s_) ${'ref:'}
+      }
+    }
+  `
+
   describeRefs('default export')`
     function _fo§o_() {} ${'decl:'}
     console.log(_f§oo_) ${'ref:'}
