@@ -515,6 +515,13 @@ describe('modules/svelte', () => {
       </script>
     `
 
+    describeRefs('<slot> variables')`
+      <Cmp let:_fo§o_ ${'decl: slot variable '}>
+        {_fo§o_} ${'ref:'} {_fo§o_} ${'ref:'}
+        <Cmp {_f§oo_} ${'ref:'} bar={_§foo_} ${'ref:'} />
+      </Cmp>
+    `
+
     describe('store auto subscriptions', () => {
       describeRefs('from default import')`
         <script>
